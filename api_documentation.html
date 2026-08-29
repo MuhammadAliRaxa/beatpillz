@@ -1,0 +1,1155 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>BeatPillz Complete Mobile REST API Specification</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap');
+
+        @page {
+            size: A4;
+            margin: 18mm 14mm 18mm 14mm;
+            @bottom-right {
+                content: "Page " counter(page);
+                font-family: 'Inter', sans-serif;
+                font-size: 8.5pt;
+                color: #64748b;
+            }
+            @bottom-left {
+                content: "BeatPillz Mobile REST API Specification";
+                font-family: 'Inter', sans-serif;
+                font-size: 8.5pt;
+                color: #64748b;
+            }
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            color: #0f172a;
+            background-color: #ffffff;
+            line-height: 1.55;
+            font-size: 9.5pt;
+        }
+
+        .cover-page {
+            page-break-after: always;
+            min-height: 90vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: flex-start;
+            padding: 50px 30px;
+            background: linear-gradient(135deg, #090d16 0%, #1e1b4b 60%, #31104b 100%);
+            color: #ffffff;
+            border-radius: 12px;
+        }
+
+        .cover-badge {
+            display: inline-block;
+            background: rgba(99, 102, 241, 0.25);
+            border: 1px solid #818cf8;
+            color: #c7d2fe;
+            padding: 6px 16px;
+            border-radius: 20px;
+            font-size: 9.5pt;
+            font-weight: 600;
+            margin-bottom: 25px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .cover-title {
+            font-size: 32pt;
+            font-weight: 800;
+            line-height: 1.15;
+            margin-bottom: 16px;
+            background: linear-gradient(90deg, #ffffff, #e2e8f0);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .cover-subtitle {
+            font-size: 13pt;
+            color: #94a3b8;
+            margin-bottom: 40px;
+            max-width: 600px;
+            line-height: 1.5;
+        }
+
+        .cover-meta {
+            margin-top: auto;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            border-top: 1px solid rgba(255, 255, 255, 0.15);
+            padding-top: 25px;
+            width: 100%;
+        }
+
+        .meta-item strong {
+            display: block;
+            font-size: 8.5pt;
+            color: #94a3b8;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 3px;
+        }
+
+        .meta-item span {
+            font-size: 10.5pt;
+            color: #f8fafc;
+            font-weight: 500;
+        }
+
+        h1 {
+            font-size: 17pt;
+            font-weight: 800;
+            color: #0f172a;
+            margin-top: 28px;
+            margin-bottom: 14px;
+            border-bottom: 2px solid #e2e8f0;
+            padding-bottom: 6px;
+            page-break-after: avoid;
+        }
+
+        h2 {
+            font-size: 12.5pt;
+            font-weight: 700;
+            color: #1e293b;
+            margin-top: 20px;
+            margin-bottom: 10px;
+            page-break-after: avoid;
+        }
+
+        p {
+            margin-bottom: 10px;
+            color: #334155;
+        }
+
+        .badge {
+            display: inline-block;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 8pt;
+            font-weight: 700;
+            padding: 3px 8px;
+            border-radius: 5px;
+            text-transform: uppercase;
+        }
+
+        .badge-post { background: #dcfce7; color: #15803d; border: 1px solid #bbf7d0; }
+        .badge-get { background: #dbeafe; color: #1d4ed8; border: 1px solid #bfdbfe; }
+        .badge-put { background: #fef3c7; color: #b45309; border: 1px solid #fde68a; }
+        .badge-delete { background: #fee2e2; color: #b91c1c; border: 1px solid #fecaca; }
+        .badge-auth { background: #f1f5f9; color: #475569; border: 1px solid #cbd5e1; font-size: 7.5pt; margin-left: 6px; }
+
+        .endpoint-card {
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 7px;
+            padding: 12px 15px;
+            margin-bottom: 15px;
+            page-break-inside: avoid;
+        }
+
+        .endpoint-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+
+        .endpoint-path {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 9.5pt;
+            font-weight: 700;
+            color: #0f172a;
+            margin-left: 8px;
+        }
+
+        pre {
+            background: #090d16;
+            color: #f8fafc;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 8pt;
+            padding: 10px 14px;
+            border-radius: 6px;
+            overflow-x: auto;
+            margin-bottom: 10px;
+            line-height: 1.45;
+        }
+
+        code {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 8.5pt;
+            background: #f1f5f9;
+            color: #0f172a;
+            padding: 2px 4px;
+            border-radius: 4px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 16px;
+            font-size: 8.5pt;
+            page-break-inside: avoid;
+        }
+
+        th, td {
+            border: 1px solid #e2e8f0;
+            padding: 7px 10px;
+            text-align: left;
+        }
+
+        th {
+            background: #f1f5f9;
+            font-weight: 700;
+            color: #1e293b;
+        }
+
+        tr:nth-child(even) td {
+            background: #fafafa;
+        }
+
+        .callout {
+            border-left: 4px solid #6366f1;
+            background: #eef2ff;
+            padding: 10px 14px;
+            border-radius: 0 6px 6px 0;
+            margin-bottom: 14px;
+            font-size: 9pt;
+        }
+
+        .page-break {
+            page-break-before: always;
+        }
+
+        .toc-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px 20px;
+            margin-bottom: 20px;
+            font-size: 9pt;
+        }
+
+        .toc-item {
+            padding: 5px 0;
+            border-bottom: 1px dotted #cbd5e1;
+            display: flex;
+            justify-content: space-between;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Cover Page -->
+    <div class="cover-page">
+        <div class="cover-badge">Complete REST API Specification</div>
+        <div class="cover-title">BeatPillz Mobile API Documentation</div>
+        <div class="cover-subtitle">Complete, production-ready REST API guide for mobile engineers building Flutter, React Native, Swift, and Kotlin applications.</div>
+        
+        <div class="cover-meta">
+            <div class="meta-item">
+                <strong>Platform Version</strong>
+                <span>Laravel 10.x / Sanctum Token Auth</span>
+            </div>
+            <div class="meta-item">
+                <strong>Production Base URL</strong>
+                <span>https://beatpillz.com/api/v1</span>
+            </div>
+            <div class="meta-item">
+                <strong>Total Endpoints</strong>
+                <span>35+ Dedicated Mobile Routes</span>
+            </div>
+            <div class="meta-item">
+                <strong>Payload Format</strong>
+                <span>JSON (RFC 8259)</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Table of Contents -->
+    <h1>Table of Contents</h1>
+    <div class="toc-grid">
+        <div class="toc-item"><span>1. Overview & Authentication Flow</span><strong>Sec 1</strong></div>
+        <div class="toc-item"><span>2. Authentication & Social Sign-In</span><strong>Sec 2</strong></div>
+        <div class="toc-item"><span>3. User Profile, KYC & Creator Setup</span><strong>Sec 3</strong></div>
+        <div class="toc-item"><span>4. Home Discovery, Categories & Producers</span><strong>Sec 4</strong></div>
+        <div class="toc-item"><span>5. Beats Catalog, Previews & Streaming</span><strong>Sec 5</strong></div>
+        <div class="toc-item"><span>6. Reviews, Comments & Wishlist</span><strong>Sec 6</strong></div>
+        <div class="toc-item"><span>7. Shopping Cart & Multi-License</span><strong>Sec 7</strong></div>
+        <div class="toc-item"><span>8. Checkout & 1-Click Wallet Payments</span><strong>Sec 8</strong></div>
+        <div class="toc-item"><span>9. User Library, Downloads & Statements</span><strong>Sec 9</strong></div>
+        <div class="toc-item"><span>10. Producer Studio & Beat Uploads</span><strong>Sec 10</strong></div>
+        <div class="toc-item"><span>11. Subscriptions & Premium Plans</span><strong>Sec 11</strong></div>
+        <div class="toc-item"><span>12. Refunds, Support Tickets & FAQs</span><strong>Sec 12</strong></div>
+        <div class="toc-item"><span>13. App Config & Multi-Currency</span><strong>Sec 13</strong></div>
+        <div class="toc-item"><span>14. Ready Flutter / Dart Client Code</span><strong>Sec 14</strong></div>
+    </div>
+
+    <!-- Section 1: Overview -->
+    <h1>1. Overview & Authentication Architecture</h1>
+    <p>All mobile endpoints are grouped under the prefix <code>/api/v1/*</code>. Every request and response uses pure JSON payloads with standardized structure.</p>
+
+    <div class="callout">
+        <strong>Base URLs:</strong><br>
+        • <strong>Production</strong>: <code>https://beatpillz.com/api/v1</code><br>
+        • <strong>Local Development</strong>: <code>http://127.0.0.1:8000/api/v1</code>
+    </div>
+
+    <h2>Standard Response Format</h2>
+    <p>All successful responses return HTTP status <code>200</code> or <code>201</code>:</p>
+<pre>{
+  "success": true,
+  "message": "Optional descriptive message",
+  "data": { ... }
+}</pre>
+
+    <p>All validation errors return HTTP status <code>422</code>:</p>
+<pre>{
+  "success": false,
+  "message": "The email has already been taken.",
+  "errors": {
+    "email": ["The email has already been taken."]
+  }
+}</pre>
+
+    <div class="page-break"></div>
+
+    <!-- Section 2: Auth Endpoints -->
+    <h1>2. Authentication & Social Sign-In</h1>
+
+    <div class="endpoint-card">
+        <div class="endpoint-header">
+            <span class="badge badge-post">POST</span>
+            <span class="endpoint-path">/auth/register</span>
+        </div>
+        <p>Register new user with name, username, email, password, and optional device name.</p>
+<pre>// Request
+{
+  "firstname": "John",
+  "lastname": "Doe",
+  "username": "johndoe",
+  "email": "johndoe@example.com",
+  "password": "Password123",
+  "password_confirmation": "Password123",
+  "device_name": "Flutter iOS"
+}
+
+// Response (201 Created)
+{
+  "success": true,
+  "message": "Registration successful.",
+  "access_token": "1|qWeRtY123456...",
+  "token_type": "Bearer",
+  "user": {
+    "id": 1,
+    "firstname": "John",
+    "lastname": "Doe",
+    "fullname": "John Doe",
+    "username": "johndoe",
+    "email": "johndoe@example.com",
+    "avatar": null,
+    "is_author": false,
+    "balance": 0.00
+  }
+}</pre>
+    </div>
+
+    <div class="endpoint-card">
+        <div class="endpoint-header">
+            <span class="badge badge-post">POST</span>
+            <span class="endpoint-path">/auth/login</span>
+        </div>
+        <p>Authenticate with <strong>Email</strong> or <strong>Username</strong>.</p>
+<pre>// Request
+{
+  "login": "johndoe@example.com", // Or "johndoe"
+  "password": "Password123",
+  "device_name": "iPhone 15 Pro"
+}
+
+// Response (200 OK)
+{
+  "success": true,
+  "message": "Login successful.",
+  "access_token": "2|aBcDeF654321...",
+  "token_type": "Bearer",
+  "user": {
+    "id": 1,
+    "username": "johndoe",
+    "email": "johndoe@example.com",
+    "balance": 25.50
+  }
+}</pre>
+    </div>
+
+    <div class="endpoint-card">
+        <div class="endpoint-header">
+            <span class="badge badge-post">POST</span>
+            <span class="endpoint-path">/auth/social-login</span>
+        </div>
+        <p>Native Google, Apple, or Facebook mobile sign-in.</p>
+<pre>// Request
+{
+  "provider": "google", // "google" | "apple" | "facebook"
+  "provider_id": "10982347209384",
+  "email": "johndoe@gmail.com",
+  "firstname": "John",
+  "lastname": "Doe",
+  "avatar": "https://lh3.googleusercontent.com/...",
+  "device_name": "Pixel 8"
+}
+
+// Response (200 OK)
+{
+  "success": true,
+  "message": "Social login successful.",
+  "access_token": "3|zXcVbN987654...",
+  "token_type": "Bearer",
+  "user": { "id": 1, "username": "johndoe", "email": "johndoe@gmail.com" }
+}</pre>
+    </div>
+
+    <div class="endpoint-card">
+        <div class="endpoint-header">
+            <span class="badge badge-post">POST</span>
+            <span class="endpoint-path">/auth/forgot-password</span>
+        </div>
+        <p>Dispatches password reset instructions to user's registered email address.</p>
+<pre>// Request
+{ "email": "johndoe@example.com" }
+
+// Response (200 OK)
+{ "success": true, "message": "Password reset instructions have been sent to your email address." }</pre>
+    </div>
+
+    <div class="endpoint-card">
+        <div class="endpoint-header">
+            <span class="badge badge-post">POST</span>
+            <span class="endpoint-path">/auth/logout</span>
+            <span class="badge badge-auth">Token Required</span>
+        </div>
+        <p>Revokes the active mobile session Bearer access token.</p>
+<pre>// Response (200 OK)
+{ "success": true, "message": "Logged out successfully." }</pre>
+    </div>
+
+    <div class="page-break"></div>
+
+    <!-- Section 3: Profile & Creator -->
+    <h1>3. User Profile, KYC & Creator Setup</h1>
+
+    <div class="endpoint-card">
+        <div class="endpoint-header">
+            <span class="badge badge-get">GET</span>
+            <span class="endpoint-path">/user/profile</span>
+            <span class="badge badge-auth">Token Required</span>
+        </div>
+        <p>Returns authenticated user profile, balances, KYC status, author status, and badges.</p>
+    </div>
+
+    <div class="endpoint-card">
+        <div class="endpoint-header">
+            <span class="badge badge-put">PUT</span>
+            <span class="endpoint-path">/user/profile</span>
+            <span class="badge badge-auth">Token Required</span>
+        </div>
+        <p>Update personal info, biography, and social media handles.</p>
+<pre>// Request Body
+{
+  "firstname": "John",
+  "lastname": "Doe",
+  "profile_heading": "Producer & Audio Engineer",
+  "profile_description": "Crafting hard trap and afrobeat sounds for 5+ years.",
+  "social_links": {
+    "instagram": "https://instagram.com/johndoe",
+    "youtube": "https://youtube.com/@johndoe"
+  }
+}</pre>
+    </div>
+
+    <div class="endpoint-card">
+        <div class="endpoint-header">
+            <span class="badge badge-post">POST</span>
+            <span class="endpoint-path">/user/avatar</span>
+            <span class="badge badge-auth">Token Required</span>
+        </div>
+        <p>Upload avatar image file using <code>multipart/form-data</code> (key: <code>avatar</code>, allowed: jpg, png, webp, max: 4MB).</p>
+    </div>
+
+    <div class="endpoint-card">
+        <div class="endpoint-header">
+            <span class="badge badge-put">PUT</span>
+            <span class="endpoint-path">/user/password</span>
+            <span class="badge badge-auth">Token Required</span>
+        </div>
+        <p>Change password (requires <code>current_password</code>, <code>password</code>, <code>password_confirmation</code>).</p>
+    </div>
+
+    <div class="endpoint-card">
+        <div class="endpoint-header">
+            <span class="badge badge-get">GET</span>
+            <span class="endpoint-path">/user/kyc</span>
+            <span class="badge badge-auth">Token Required</span>
+        </div>
+        <p>Returns KYC verification status (<code>is_verified: true|false</code>) and submission logs.</p>
+    </div>
+
+    <div class="endpoint-card">
+        <div class="endpoint-header">
+            <span class="badge badge-post">POST</span>
+            <span class="endpoint-path">/user/become-author</span>
+            <span class="badge badge-auth">Token Required</span>
+        </div>
+        <p>Upgrades standard buyer account to Author/Producer status with default level badge.</p>
+    </div>
+
+    <div class="endpoint-card">
+        <div class="endpoint-header">
+            <span class="badge badge-put">PUT</span>
+            <span class="endpoint-path">/user/withdrawal-account</span>
+            <span class="badge badge-auth">Token Required</span>
+        </div>
+        <p>Configure author payout account (e.g. <code>withdrawal_method_id: 1</code>, <code>withdrawal_account: "paypal@example.com"</code>).</p>
+    </div>
+
+    <div class="page-break"></div>
+
+    <!-- Section 4: Home Discovery -->
+    <h1>4. Home Discovery, Categories & Producers</h1>
+
+    <div class="endpoint-card">
+        <div class="endpoint-header">
+            <span class="badge badge-get">GET</span>
+            <span class="endpoint-path">/home</span>
+        </div>
+        <p>Aggregated mobile dashboard payload with featured beats, trending, best sellers, latest releases, curated categories, and featured producers.</p>
+<pre>// Response Structure
+{
+  "success": true,
+  "data": {
+    "featured_beats": [ ... ],
+    "trending_beats": [ ... ],
+    "best_selling_beats": [ ... ],
+    "latest_beats": [ ... ],
+    "categories": [ ... ],
+    "featured_producers": [ ... ]
+  }
+}</pre>
+    </div>
+
+    <div class="endpoint-card">
+        <div class="endpoint-header">
+            <span class="badge badge-get">GET</span>
+            <span class="endpoint-path">/categories</span>
+        </div>
+        <p>Nested list of all music categories / genres and subcategories with item counters.</p>
+    </div>
+
+    <div class="endpoint-card">
+        <div class="endpoint-header">
+            <span class="badge badge-get">GET</span>
+            <span class="endpoint-path">/producers/{username_or_id}</span>
+        </div>
+        <p>Public producer profile with their uploaded beats catalog, badges, follower count, and <code>is_following</code> flag.</p>
+    </div>
+
+    <div class="endpoint-card">
+        <div class="endpoint-header">
+            <span class="badge badge-post">POST</span>
+            <span class="endpoint-path">/producers/{id}/follow</span>
+            <span class="badge badge-auth">Token Required</span>
+        </div>
+        <p>Follow or unfollow a producer.</p>
+<pre>// Response
+{ "success": true, "is_following": true, "message": "Following producer." }</pre>
+    </div>
+
+    <div class="endpoint-card">
+        <div class="endpoint-header">
+            <span class="badge badge-get">GET</span>
+            <span class="endpoint-path">/user/following</span>
+            <span class="badge badge-auth">Token Required</span>
+        </div>
+        <p>Returns list of all producers followed by the user.</p>
+    </div>
+
+    <div class="page-break"></div>
+
+    <!-- Section 5: Beats Catalog -->
+    <h1>5. Beats Marketplace Catalog & Streaming</h1>
+
+    <div class="endpoint-card">
+        <div class="endpoint-header">
+            <span class="badge badge-get">GET</span>
+            <span class="endpoint-path">/items</span>
+        </div>
+        <p>Search, filter, and paginate the marketplace catalog.</p>
+        <table>
+            <thead>
+                <tr>
+                    <th>Parameter</th>
+                    <th>Type</th>
+                    <th>Example</th>
+                    <th>Description</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr><td><code>q</code></td><td>string</td><td><code>?q=afrobeat</code></td><td>Search keyword in title, description, tags</td></tr>
+                <tr><td><code>category</code></td><td>string</td><td><code>?category=afrobeats</code></td><td>Category slug or ID</td></tr>
+                <tr><td><code>subcategory</code></td><td>string</td><td><code>?subcategory=afropop</code></td><td>SubCategory slug or ID</td></tr>
+                <tr><td><code>author</code></td><td>string</td><td><code>?author=metrobeatz</code></td><td>Filter beats by author username</td></tr>
+                <tr><td><code>min_price</code></td><td>float</td><td><code>?min_price=10</code></td><td>Minimum price filter</td></tr>
+                <tr><td><code>max_price</code></td><td>float</td><td><code>?max_price=100</code></td><td>Maximum price filter</td></tr>
+                <tr><td><code>is_free</code></td><td>int</td><td><code>?is_free=1</code></td><td>Filter free beats</td></tr>
+                <tr><td><code>is_premium</code></td><td>int</td><td><code>?is_premium=1</code></td><td>Filter subscription premium beats</td></tr>
+                <tr><td><code>sort</code></td><td>string</td><td><code>?sort=popular</code></td><td><code>latest</code>, <code>popular</code>, <code>price_low</code>, <code>price_high</code>, <code>rating</code></td></tr>
+                <tr><td><code>page</code></td><td>int</td><td><code>?page=2</code></td><td>Pagination page</td></tr>
+            </tbody>
+        </table>
+    </div>
+
+    <div class="endpoint-card">
+        <div class="endpoint-header">
+            <span class="badge badge-get">GET</span>
+            <span class="endpoint-path">/items/{slug_or_id}</span>
+        </div>
+        <p>Full beat details with streamable audio preview URL, regular/extended prices, discounts, producer profile, and related recommendations.</p>
+<pre>// Response Structure
+{
+  "success": true,
+  "item": {
+    "id": 12,
+    "name": "Lagos Night (Afropop Beat)",
+    "slug": "lagos-night-afropop-beat",
+    "description": "Premium Afrobeat instrumental with drums, horns and lead guitar.",
+    "preview_audio_url": "https://beatpillz.com/storage/previews/audio/track12.mp3",
+    "thumbnail_url": "https://beatpillz.com/storage/thumbnails/art12.jpg",
+    "price": {
+      "regular": 29.99,
+      "extended": 99.99,
+      "has_discount": true,
+      "discount_regular": 19.99,
+      "discount_percent": 33
+    },
+    "is_free": false,
+    "is_premium": false,
+    "is_favorited": true,
+    "total_sales": 87,
+    "avg_reviews": 4.8,
+    "category": { "id": 1, "name": "Afrobeats", "slug": "afrobeats" },
+    "author": { "id": 4, "name": "Producer X", "username": "producerx" },
+    "tags": ["afrobeat", "burnaboy", "wizkid", "drums"]
+  },
+  "related": [ ... ],
+  "author_more": [ ... ]
+}</pre>
+    </div>
+
+    <div class="endpoint-card">
+        <div class="endpoint-header">
+            <span class="badge badge-get">GET</span>
+            <span class="endpoint-path">/items/{id}/download-free</span>
+        </div>
+        <p>Stream or download free beat files directly without going through cart or checkout.</p>
+    </div>
+
+    <div class="page-break"></div>
+
+    <!-- Section 6: Reviews, Comments & Wishlist -->
+    <h1>6. Reviews, Comments & Wishlist</h1>
+
+    <table>
+        <thead>
+            <tr>
+                <th>Method</th>
+                <th>Endpoint</th>
+                <th>Auth</th>
+                <th>Description</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td><span class="badge badge-get">GET</span></td>
+                <td><code>/items/{id}/reviews</code></td>
+                <td>Public</td>
+                <td>List star ratings & customer reviews for a beat</td>
+            </tr>
+            <tr>
+                <td><span class="badge badge-post">POST</span></td>
+                <td><code>/items/{id}/reviews</code></td>
+                <td><span class="badge badge-auth">Token</span></td>
+                <td>Submit review (rating: 1-5, subject, body). Must have purchased beat.</td>
+            </tr>
+            <tr>
+                <td><span class="badge badge-get">GET</span></td>
+                <td><code>/items/{id}/comments</code></td>
+                <td>Public</td>
+                <td>Get threaded discussion comments and producer replies</td>
+            </tr>
+            <tr>
+                <td><span class="badge badge-post">POST</span></td>
+                <td><code>/items/{id}/comments</code></td>
+                <td><span class="badge badge-auth">Token</span></td>
+                <td>Post a comment / question on a beat (body)</td>
+            </tr>
+            <tr>
+                <td><span class="badge badge-post">POST</span></td>
+                <td><code>/items/{id}/favorite</code></td>
+                <td><span class="badge badge-auth">Token</span></td>
+                <td>Toggle beat in user's favorites / wishlist</td>
+            </tr>
+            <tr>
+                <td><span class="badge badge-get">GET</span></td>
+                <td><code>/favorites</code></td>
+                <td><span class="badge badge-auth">Token</span></td>
+                <td>List all favorited beats in user wishlist</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <!-- Section 7: Cart -->
+    <h1>7. Shopping Cart & Multi-License</h1>
+
+    <div class="endpoint-card">
+        <div class="endpoint-header">
+            <span class="badge badge-get">GET</span>
+            <span class="endpoint-path">/cart</span>
+            <span class="badge badge-auth">Token Required</span>
+        </div>
+        <p>Get active cart items, license types (Regular vs Extended), and subtotal.</p>
+    </div>
+
+    <div class="endpoint-card">
+        <div class="endpoint-header">
+            <span class="badge badge-post">POST</span>
+            <span class="endpoint-path">/cart/add</span>
+            <span class="badge badge-auth">Token Required</span>
+        </div>
+        <p>Add beat to cart with selected license type.</p>
+<pre>// Request Body
+{
+  "item_id": 12,
+  "license_type": 1 // 1: Regular License, 2: Extended License
+}</pre>
+    </div>
+
+    <div class="endpoint-card">
+        <div class="endpoint-header">
+            <span class="badge badge-delete">DELETE</span>
+            <span class="endpoint-path">/cart/{id}</span>
+            <span class="badge badge-auth">Token Required</span>
+        </div>
+        <p>Remove single item from cart.</p>
+    </div>
+
+    <div class="endpoint-card">
+        <div class="endpoint-header">
+            <span class="badge badge-delete">DELETE</span>
+            <span class="endpoint-path">/cart/clear</span>
+            <span class="badge badge-auth">Token Required</span>
+        </div>
+        <p>Empty user's entire cart.</p>
+    </div>
+
+    <div class="page-break"></div>
+
+    <!-- Section 8: Checkout & Payments -->
+    <h1>8. Mobile Checkout & 1-Click Wallet Payments</h1>
+
+    <div class="endpoint-card">
+        <div class="endpoint-header">
+            <span class="badge badge-get">GET</span>
+            <span class="endpoint-path">/checkout/gateways</span>
+            <span class="badge badge-auth">Token Required</span>
+        </div>
+        <p>Returns list of active payment gateways (Stripe, PayPal, Razorpay, etc.) and current user wallet balance.</p>
+    </div>
+
+    <div class="endpoint-card">
+        <div class="endpoint-header">
+            <span class="badge badge-post">POST</span>
+            <span class="endpoint-path">/checkout/create-transaction</span>
+            <span class="badge badge-auth">Token Required</span>
+        </div>
+        <p>Converts cart into an unpaid transaction order.</p>
+<pre>// Response (201 Created)
+{
+  "success": true,
+  "transaction_id": 42,
+  "total_amount": 29.99,
+  "user_balance": 50.00,
+  "can_pay_balance": true
+}</pre>
+    </div>
+
+    <div class="endpoint-card">
+        <div class="endpoint-header">
+            <span class="badge badge-post">POST</span>
+            <span class="endpoint-path">/checkout/pay-with-balance</span>
+            <span class="badge badge-auth">Token Required</span>
+        </div>
+        <p>Instantly completes purchase and delivers items to User Library using account balance.</p>
+<pre>// Request Body
+{ "transaction_id": 42 }
+
+// Response (200 OK)
+{
+  "success": true,
+  "message": "Purchase completed successfully!",
+  "new_balance": 20.01,
+  "transaction_id": 42
+}</pre>
+    </div>
+
+    <!-- Section 9: Library & Downloads -->
+    <h1>9. User Library, Downloads & Statements</h1>
+
+    <div class="endpoint-card">
+        <div class="endpoint-header">
+            <span class="badge badge-get">GET</span>
+            <span class="endpoint-path">/user/purchases</span>
+            <span class="badge badge-auth">Token Required</span>
+        </div>
+        <p>List all purchased beats in User Library with purchase certificate codes, license types, and review status.</p>
+    </div>
+
+    <div class="endpoint-card">
+        <div class="endpoint-header">
+            <span class="badge badge-get">GET</span>
+            <span class="endpoint-path">/user/purchases/{id}/download</span>
+            <span class="badge badge-auth">Token Required</span>
+        </div>
+        <p>Direct binary stream download for purchased beat audio, lossless WAV files, stems, and licenses.</p>
+    </div>
+
+    <div class="endpoint-card">
+        <div class="endpoint-header">
+            <span class="badge badge-get">GET</span>
+            <span class="endpoint-path">/user/statements</span>
+            <span class="badge badge-auth">Token Required</span>
+        </div>
+        <p>Paginated financial statements and order invoices.</p>
+    </div>
+
+    <div class="page-break"></div>
+
+    <!-- Section 10: Producer Studio -->
+    <h1>10. Producer Studio & Beat Uploads</h1>
+
+    <div class="endpoint-card">
+        <div class="endpoint-header">
+            <span class="badge badge-get">GET</span>
+            <span class="endpoint-path">/author/dashboard</span>
+            <span class="badge badge-auth">Token Required</span>
+        </div>
+        <p>Producer earnings, total sales amount, balance, followers count, and active/pending item counts.</p>
+    </div>
+
+    <div class="endpoint-card">
+        <div class="endpoint-header">
+            <span class="badge badge-get">GET</span>
+            <span class="endpoint-path">/author/items</span>
+            <span class="badge badge-auth">Token Required</span>
+        </div>
+        <p>List all beats uploaded by the producer with review status (<code>1: Pending</code>, <code>2: Soft Rejected</code>, <code>4: Approved</code>).</p>
+    </div>
+
+    <div class="endpoint-card">
+        <div class="endpoint-header">
+            <span class="badge badge-post">POST</span>
+            <span class="endpoint-path">/author/items/upload</span>
+            <span class="badge badge-auth">Token Required</span>
+        </div>
+        <p>Upload a new beat directly from mobile using <code>multipart/form-data</code>.</p>
+        <table>
+            <thead>
+                <tr>
+                    <th>Field</th>
+                    <th>Type</th>
+                    <th>Required</th>
+                    <th>Description</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr><td><code>name</code></td><td>string</td><td>Yes</td><td>Title of the beat (max 150 chars)</td></tr>
+                <tr><td><code>category_id</code></td><td>int</td><td>Yes</td><td>Genre / Category ID</td></tr>
+                <tr><td><code>sub_category_id</code></td><td>int</td><td>No</td><td>SubCategory ID</td></tr>
+                <tr><td><code>description</code></td><td>string</td><td>Yes</td><td>Beat description / BPM / Key info</td></tr>
+                <tr><td><code>regular_price</code></td><td>float</td><td>Yes</td><td>Standard MP3/WAV license price</td></tr>
+                <tr><td><code>extended_price</code></td><td>float</td><td>No</td><td>Unlimited / Trackout price</td></tr>
+                <tr><td><code>tags</code></td><td>string</td><td>No</td><td>Comma-separated tags (e.g. <code>trap,808,drake</code>)</td></tr>
+                <tr><td><code>preview_audio</code></td><td>file</td><td>No</td><td>MP3/WAV preview audio file</td></tr>
+                <tr><td><code>thumbnail</code></td><td>file</td><td>No</td><td>Cover artwork image</td></tr>
+            </tbody>
+        </table>
+    </div>
+
+    <div class="endpoint-card">
+        <div class="endpoint-header">
+            <span class="badge badge-delete">DELETE</span>
+            <span class="endpoint-path">/author/items/{id}</span>
+            <span class="badge badge-auth">Token Required</span>
+        </div>
+        <p>Delete draft or rejected beat.</p>
+    </div>
+
+    <div class="endpoint-card">
+        <div class="endpoint-header">
+            <span class="badge badge-get">GET</span>
+            <span class="endpoint-path">/author/sales</span>
+            <span class="badge badge-auth">Token Required</span>
+        </div>
+        <p>Detailed sales breakdown with buyer details and net author commission earnings.</p>
+    </div>
+
+    <div class="endpoint-card">
+        <div class="endpoint-header">
+            <span class="badge badge-get">GET</span>
+            <span class="endpoint-path">/author/withdrawals</span>
+            <span class="badge badge-auth">Token Required</span>
+        </div>
+        <p>List available payout methods, minimum thresholds, and withdrawal history.</p>
+    </div>
+
+    <div class="endpoint-card">
+        <div class="endpoint-header">
+            <span class="badge badge-post">POST</span>
+            <span class="endpoint-path">/author/withdrawals/request</span>
+            <span class="badge badge-auth">Token Required</span>
+        </div>
+        <p>Submit payout request for producer balance.</p>
+    </div>
+
+    <div class="page-break"></div>
+
+    <!-- Section 11: Subscriptions, Blog & Support -->
+    <h1>11. Subscriptions, Blog & Refunds</h1>
+
+    <table>
+        <thead>
+            <tr>
+                <th>Method</th>
+                <th>Endpoint</th>
+                <th>Auth</th>
+                <th>Description</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td><span class="badge badge-get">GET</span></td>
+                <td><code>/plans</code></td>
+                <td>Public</td>
+                <td>List active subscription plans & features</td>
+            </tr>
+            <tr>
+                <td><span class="badge badge-get">GET</span></td>
+                <td><code>/user/subscription</code></td>
+                <td><span class="badge badge-auth">Token</span></td>
+                <td>Check user's current subscription & expiry date</td>
+            </tr>
+            <tr>
+                <td><span class="badge badge-get">GET</span></td>
+                <td><code>/blog</code></td>
+                <td>Public</td>
+                <td>List published blog articles (filter by category)</td>
+            </tr>
+            <tr>
+                <td><span class="badge badge-get">GET</span></td>
+                <td><code>/blog/{slug}</code></td>
+                <td>Public</td>
+                <td>Get full article details</td>
+            </tr>
+            <tr>
+                <td><span class="badge badge-get">GET</span></td>
+                <td><code>/refunds</code></td>
+                <td><span class="badge badge-auth">Token</span></td>
+                <td>List buyer and producer refund requests</td>
+            </tr>
+            <tr>
+                <td><span class="badge badge-post">POST</span></td>
+                <td><code>/refunds</code></td>
+                <td><span class="badge badge-auth">Token</span></td>
+                <td>Submit refund request (purchase_id, reason, message)</td>
+            </tr>
+            <tr>
+                <td><span class="badge badge-get">GET</span></td>
+                <td><code>/refunds/{id}</code></td>
+                <td><span class="badge badge-auth">Token</span></td>
+                <td>View refund conversation thread & replies</td>
+            </tr>
+            <tr>
+                <td><span class="badge badge-post">POST</span></td>
+                <td><code>/refunds/{id}/reply</code></td>
+                <td><span class="badge badge-auth">Token</span></td>
+                <td>Reply in refund discussion</td>
+            </tr>
+            <tr>
+                <td><span class="badge badge-get">GET</span></td>
+                <td><code>/tickets</code></td>
+                <td><span class="badge badge-auth">Token</span></td>
+                <td>List customer support tickets</td>
+            </tr>
+            <tr>
+                <td><span class="badge badge-get">GET</span></td>
+                <td><code>/tickets/categories</code></td>
+                <td><span class="badge badge-auth">Token</span></td>
+                <td>Get support ticket categories</td>
+            </tr>
+            <tr>
+                <td><span class="badge badge-post">POST</span></td>
+                <td><code>/tickets</code></td>
+                <td><span class="badge badge-auth">Token</span></td>
+                <td>Create support ticket (category_id, subject, message)</td>
+            </tr>
+            <tr>
+                <td><span class="badge badge-get">GET</span></td>
+                <td><code>/tickets/{id}</code></td>
+                <td><span class="badge badge-auth">Token</span></td>
+                <td>View ticket conversation thread</td>
+            </tr>
+            <tr>
+                <td><span class="badge badge-post">POST</span></td>
+                <td><code>/tickets/{id}/reply</code></td>
+                <td><span class="badge badge-auth">Token</span></td>
+                <td>Reply to support ticket</td>
+            </tr>
+            <tr>
+                <td><span class="badge badge-get">GET</span></td>
+                <td><code>/help/categories</code></td>
+                <td>Public</td>
+                <td>Help center categories & articles</td>
+            </tr>
+            <tr>
+                <td><span class="badge badge-get">GET</span></td>
+                <td><code>/help/faqs</code></td>
+                <td>Public</td>
+                <td>Platform Frequently Asked Questions</td>
+            </tr>
+            <tr>
+                <td><span class="badge badge-get">GET</span></td>
+                <td><code>/config</code></td>
+                <td>Public</td>
+                <td>Currencies, rates, legal links, support contacts</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <div class="page-break"></div>
+
+    <!-- Section 12: Ready Flutter Integration -->
+    <h1>12. Complete Flutter / Dart Service Boilerplate</h1>
+
+<pre>import 'dart:convert';
+import 'package:http/http.dart' as http;
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+
+class BeatPillzApi {
+  static const String baseUrl = 'https://beatpillz.com/api/v1';
+  static const _storage = FlutterSecureStorage();
+
+  // Authentication Headers
+  static Future&lt;Map&lt;String, String&gt;&gt; getHeaders() async {
+    final token = await _storage.read(key: 'auth_token');
+    return {
+      'Content-Type': 'application/json',
+      'Accept': 'application/json',
+      if (token != null) 'Authorization': 'Bearer $token',
+    };
+  }
+
+  // 1. Email/Username Login
+  static Future&lt;Map&lt;String, dynamic&gt;&gt; login(String login, String password) async {
+    final res = await http.post(
+      Uri.parse('$baseUrl/auth/login'),
+      headers: {'Content-Type': 'application/json', 'Accept': 'application/json'},
+      body: jsonEncode({'login': login, 'password': password, 'device_name': 'Flutter App'}),
+    );
+    final data = jsonDecode(res.body);
+    if (res.statusCode == 200 && data['success'] == true) {
+      await _storage.write(key: 'auth_token', value: data['access_token']);
+    }
+    return data;
+  }
+
+  // 2. Google / Apple Social Sign-In
+  static Future&lt;Map&lt;String, dynamic&gt;&gt; socialLogin({
+    required String provider,
+    required String providerId,
+    required String email,
+    String? firstname,
+    String? lastname,
+    String? avatar,
+  }) async {
+    final res = await http.post(
+      Uri.parse('$baseUrl/auth/social-login'),
+      headers: {'Content-Type': 'application/json', 'Accept': 'application/json'},
+      body: jsonEncode({
+        'provider': provider,
+        'provider_id': providerId,
+        'email': email,
+        'firstname': firstname,
+        'lastname': lastname,
+        'avatar': avatar,
+        'device_name': 'Flutter App',
+      }),
+    );
+    final data = jsonDecode(res.body);
+    if (res.statusCode == 200 && data['success'] == true) {
+      await _storage.write(key: 'auth_token', value: data['access_token']);
+    }
+    return data;
+  }
+
+  // 3. Home Feed
+  static Future&lt;Map&lt;String, dynamic&gt;&gt; getHome() async {
+    final headers = await getHeaders();
+    final res = await http.get(Uri.parse('$baseUrl/home'), headers: headers);
+    return jsonDecode(res.body);
+  }
+
+  // 4. Search Beats Catalog
+  static Future&lt;Map&lt;String, dynamic&gt;&gt; getBeats({
+    String? query,
+    String? category,
+    String sort = 'latest',
+    int page = 1,
+  }) async {
+    final headers = await getHeaders();
+    final uri = Uri.parse('$baseUrl/items').replace(queryParameters: {
+      if (query != null) 'q': query,
+      if (category != null) 'category': category,
+      'sort': sort,
+      'page': '$page',
+    });
+    final res = await http.get(uri, headers: headers);
+    return jsonDecode(res.body);
+  }
+
+  // 5. 1-Click Wallet Checkout
+  static Future&lt;Map&lt;String, dynamic&gt;&gt; payWithWallet(int transactionId) async {
+    final headers = await getHeaders();
+    final res = await http.post(
+      Uri.parse('$baseUrl/checkout/pay-with-balance'),
+      headers: headers,
+      body: jsonEncode({'transaction_id': transactionId}),
+    );
+    return jsonDecode(res.body);
+  }
+
+  // 6. User Purchased Library
+  static Future&lt;Map&lt;String, dynamic&gt;&gt; getUserPurchases() async {
+    final headers = await getHeaders();
+    final res = await http.get(Uri.parse('$baseUrl/user/purchases'), headers: headers);
+    return jsonDecode(res.body);
+  }
+}</pre>
+
+</body>
+</html>
