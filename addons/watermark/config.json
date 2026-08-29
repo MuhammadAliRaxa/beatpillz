@@ -1,0 +1,71 @@
+{
+  "name": "Watermark",
+  "alias": "watermark",
+  "version": "1.0",
+  "thumbnail": "images/addons/watermark/thumbnail.png",
+  "path": "addons/watermark",
+  "action": "settings/watermark",
+  "status": 0,
+  "type": "addon",
+  "item": {
+    "alias": "uab_marketbob",
+    "version": "1.0"
+  },
+  "script": {
+    "alias": "marketbob",
+    "version": "1.3"
+  },
+  "database": {
+    "files": ["addons/watermark/sql/database.sql"]
+  },
+  "general_files": {
+    "remove": {
+      "directories": [],
+      "files": []
+    },
+    "create": {
+      "directories": [
+        "public/images/addons/watermark/",
+        "public/images/watermark/"
+      ]
+    },
+    "copy": {
+      "directories": [],
+      "files": [
+        {
+          "root": "addons/watermark/thumbnail.png",
+          "destination": "public/images/addons/watermark/thumbnail.png"
+        },
+        {
+          "root": "addons/watermark/images/watermark.png",
+          "destination": "public/images/watermark/watermark.png"
+        },
+        {
+          "root": "addons/watermark/controllers/WatermarkController.php",
+          "destination": "app/Http/Controllers/Admin/Settings/WatermarkController.php"
+        },
+        {
+          "root": "addons/watermark/methods/Watermark.php",
+          "destination": "app/Methods/Watermark.php"
+        },
+        {
+          "root": "addons/watermark/views/watermark.blade.php",
+          "destination": "resources/views/admin/settings/watermark.blade.php"
+        }
+      ]
+    }
+  },
+  "theme_files": {
+    "remove": {
+      "directories": [],
+      "files": []
+    },
+    "create": {
+      "directories": []
+    },
+    "copy": {
+      "directories": [],
+      "files": []
+    }
+  }
+}

@@ -1,0 +1,52 @@
+{
+  "name": "License Verification Tool",
+  "alias": "license_verification_tool",
+  "version": "1.1",
+  "thumbnail": "images/addons/license-verification-tool/thumbnail.png",
+  "path": "addons/license-verification-tool",
+  "action": null,
+  "status": 0,
+  "type": "addon",
+  "item": {
+    "alias": "uab_marketbob",
+    "version": "1.4"
+  },
+  "script": {
+    "alias": "marketbob",
+    "version": "2.2"
+  },
+  "database": {},
+  "general_files": {
+    "remove": {
+      "directories": [],
+      "files": []
+    },
+    "create": {
+      "directories": [
+        "public/images/addons/license-verification-tool/",
+        "app/Http/Controllers/Workspace/Tools/"
+      ]
+    },
+    "copy": {
+      "directories": [],
+      "files": [
+        {
+          "root": "addons/license-verification-tool/thumbnail.png",
+          "destination": "public/images/addons/license-verification-tool/thumbnail.png"
+        },
+        {
+          "root": "addons/license-verification-tool/views/admin/license.blade.php",
+          "destination": "resources/views/admin/license.blade.php"
+        },
+        {
+          "root": "addons/license-verification-tool/controllers/LicenseVerificationController.php",
+          "destination": "app/Http/Controllers/Workspace/Tools/LicenseVerificationController.php"
+        },
+        {
+          "root": "addons/license-verification-tool/controllers/Admin/LicenseController.php",
+          "destination": "app/Http/Controllers/Admin/LicenseController.php"
+        }
+      ]
+    }
+  }
+}

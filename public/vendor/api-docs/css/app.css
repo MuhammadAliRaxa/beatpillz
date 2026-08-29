@@ -1,0 +1,239 @@
+@import url("https://fonts.googleapis.com/css2?family=Poppins:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap");
+html {
+    height: -webkit-fill-available;
+}
+
+body {
+    font-family: -apple-system, BlinkMacSystemFont, Poppins, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+    display: -webkit-box;
+    display: -ms-flexbox;
+    display: flex;
+    -webkit-box-orient: vertical;
+    -webkit-box-direction: normal;
+    -ms-flex-direction: column;
+    flex-direction: column;
+    min-height: 100vh;
+    min-height: -webkit-fill-available;
+    color: #222222;
+    background-color: #f3f3f3;
+    font-size: 15px;
+}
+
+body>* {
+    -ms-flex-negative: 0;
+    flex-shrink: 0;
+}
+
+.page {
+    display: -webkit-box;
+    display: -ms-flexbox;
+    display: flex;
+    min-height: 100vh;
+}
+
+.sidebar {
+    position: -webkit-sticky;
+    position: sticky;
+    top: 0;
+    min-width: 250px;
+    height: 100vh;
+    border-right: 1px solid #e8e8e8;
+    -webkit-transition: 0.3s;
+    -o-transition: 0.3s;
+    transition: 0.3s;
+}
+
+@media (max-width: 991.98px) {
+    .sidebar {
+        position: fixed;
+        left: -250px;
+        z-index: 1000;
+    }
+}
+
+.sidebar .sidebar-toggle-btn {
+    position: absolute;
+    display: -webkit-box;
+    display: -ms-flexbox;
+    display: flex;
+    -webkit-box-align: center;
+    -ms-flex-align: center;
+    align-items: center;
+    -webkit-box-pack: center;
+    -ms-flex-pack: center;
+    justify-content: center;
+    top: 20px;
+    right: -30px;
+    width: 30px;
+    height: 30px;
+    background-color: #222222;
+    border: 1px solid #222222;
+    color: #ffffff;
+    border-left: 0;
+    font-size: 14px;
+    cursor: pointer;
+    border-top-right-radius: 6px;
+    border-bottom-right-radius: 6px;
+}
+
+.sidebar .sidebar-toggle-btn i {
+    -webkit-transition: 0.3s;
+    -o-transition: 0.3s;
+    transition: 0.3s;
+}
+
+@media (min-width: 992px) {
+    .sidebar .sidebar-toggle-btn {
+        display: none;
+    }
+}
+
+.sidebar ul {
+    margin: 0;
+}
+
+.sidebar ul li {
+    list-style-position: inside;
+}
+
+.sidebar ul li::marker {
+    color: #999;
+}
+
+.sidebar ul li button {
+    background-color: transparent;
+    color: #777;
+    padding: 0;
+    outline: 0;
+    border: 0;
+}
+
+.sidebar ul li button.active {
+    color: #ffffff;
+}
+
+.sidebar ul li:not(:last-child) {
+    margin-bottom: 12px;
+}
+
+@media (max-width: 991.98px) {
+    .sidebar.show {
+        left: 0;
+    }
+}
+
+.sidebar.show .sidebar-toggle-btn i {
+    -webkit-transform: rotate(180deg);
+    -ms-transform: rotate(180deg);
+    transform: rotate(180deg);
+}
+
+.sidebar-group-links h6 {
+    color: #dadada;
+}
+
+.sidebar-group-links:not(:last-child) {
+    margin-bottom: 25px;
+}
+
+.sidebar-inner {
+    overflow: auto;
+    height: 100%;
+    padding: 30px 24px;
+    background-color: #222222;
+}
+
+.logo {
+    -ms-flex-negative: 0;
+    flex-shrink: 0;
+    display: -webkit-inline-box;
+    display: -ms-inline-flexbox;
+    display: inline-flex;
+    height: 30px;
+}
+
+.logo img {
+    height: 100%;
+}
+
+.content {
+    width: 100%;
+    padding: 25px 35px;
+}
+
+.content-container {
+    max-width: 100%;
+}
+
+.code {
+    position: relative;
+    background-color: #22272e;
+    border-radius: 8px
+}
+
+.code:not(:last-child) {
+    margin-bottom: 25px
+}
+
+.code pre {
+    word-wrap: break-word;
+    padding: 20px;
+    display: -webkit-box;
+    display: -ms-flexbox;
+    align-items: center;
+    display: flex;
+    overflow: auto
+}
+
+.code code {
+    font-family: -apple-system, blinkmacsystemfont, san francisco, montserrat, helvetica neue, "sans-serif";
+    font-size: 16px;
+    color: #dde1e4
+}
+
+.code .copy {
+    position: absolute;
+    background-color: #41464e;
+    top: 10px;
+    right: 10px;
+    padding: 2px 8px;
+    color: #ffffff;
+    border-radius: 4px;
+    font-size: 12px;
+    cursor: pointer;
+    -webkit-transition: .3s;
+    -o-transition: .3s;
+    transition: .3s
+}
+
+.code .copy:hover {
+    opacity: .8
+}
+
+.method {
+    background-color: #41464e;
+    color: #fff;
+    padding: 2px 10px;
+    border-radius: 5px;
+    margin-right: 10px;
+}
+
+.post {
+    background-color: #34b93d;
+}
+
+.get {
+    background-color: #2775e2;
+}
+
+.card {
+    border: 0;
+}
+
+.card .card-header {
+    border-color: #e7e7e7;
+}
+
+[dir="rtl"] .code {
+    direction: ltr;
+}

@@ -1,0 +1,76 @@
+{
+    "name": "External Storage Providers",
+    "alias": "external_storage_providers",
+    "version": "1.2",
+    "thumbnail": "images/addons/external-storage-providers/thumbnail.png",
+    "description": "Multiple storage providers, includes global companies like amazon s3 and digitalocean spaces.",
+    "path": "addons/external-storage-providers",
+    "action": "settings/storage",
+    "status": null,
+    "type": "addon",
+    "item": {
+        "alias": "uab_marketbob",
+        "version": "1.5"
+    },
+    "script": {
+        "alias": "marketbob",
+        "version": "1.0"
+    },
+    "database": {
+        "files": ["addons/external-storage-providers/sql/database.sql"]
+    },
+    "general_files": {
+        "remove": {
+            "directories": [],
+            "files": []
+        },
+        "create": {
+            "directories": ["public/images/addons/external-storage-providers/"]
+        },
+        "copy": {
+            "directories": [],
+            "files": [{
+                    "root": "addons/external-storage-providers/thumbnail.png",
+                    "destination": "public/images/addons/external-storage-providers/thumbnail.png"
+                },
+                {
+                    "root": "addons/external-storage-providers/controllers/AmazonS3Controller.php",
+                    "destination": "app/Http/Controllers/Storage/AmazonS3Controller.php"
+                },
+                {
+                    "root": "addons/external-storage-providers/controllers/CloudflareR2Controller.php",
+                    "destination": "app/Http/Controllers/Storage/CloudflareR2Controller.php"
+                },
+                {
+                    "root": "addons/external-storage-providers/controllers/ContaboController.php",
+                    "destination": "app/Http/Controllers/Storage/ContaboController.php"
+                },
+                {
+                    "root": "addons/external-storage-providers/controllers/DigitaloceanController.php",
+                    "destination": "app/Http/Controllers/Storage/DigitaloceanController.php"
+                },
+                {
+                    "root": "addons/external-storage-providers/controllers/IdriveE2Controller.php",
+                    "destination": "app/Http/Controllers/Storage/IdriveE2Controller.php"
+                },
+                {
+                    "root": "addons/external-storage-providers/controllers/StorjController.php",
+                    "destination": "app/Http/Controllers/Storage/StorjController.php"
+                }
+            ]
+        }
+    },
+    "theme_files": {
+        "remove": {
+            "directories": [],
+            "files": []
+        },
+        "create": {
+            "directories": []
+        },
+        "copy": {
+            "directories": [],
+            "files": []
+        }
+    }
+}
