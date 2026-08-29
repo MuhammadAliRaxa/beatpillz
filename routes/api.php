@@ -25,3 +25,19 @@ Route::name('api.')->namespace('Api')->middleware('api.disable')->group(function
         Route::post('validation', 'PurchaseController@validation')->name('validation');
     });
 });
+
+/*
+|--------------------------------------------------------------------------
+| Mobile Application API Routes
+|--------------------------------------------------------------------------
+*/
+Route::namespace('Api')->prefix('v1/auth')->name('api.v1.auth.')->group(function () {
+    Route::post('register', 'AuthController@register')->name('register');
+    Route::post('login', 'AuthController@login')->name('login');
+
+    Route::middleware('auth:sanctum')->group(function () {
+        Route::get('profile', 'AuthController@profile')->name('profile');
+        Route::post('logout', 'AuthController@logout')->name('logout');
+    });
+});
+
