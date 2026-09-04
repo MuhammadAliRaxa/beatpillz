@@ -32,6 +32,13 @@ class ItemResource extends JsonResource
                 : asset($this->preview_image);
         }
 
+        $previewVideo = null;
+        if ($this->preview_video) {
+            $previewVideo = function_exists('getLinkFromStorageProvider')
+                ? getLinkFromStorageProvider($this->preview_video)
+                : asset($this->preview_video);
+        }
+
         $isFavorited = false;
         if (auth('sanctum')->check()) {
             $isFavorited = auth('sanctum')->user()->favorites()->where('item_id', $this->id)->exists();
@@ -42,8 +49,9 @@ class ItemResource extends JsonResource
             'name'                => $this->name,
             'slug'                => $this->slug,
             'description'         => $this->description,
-            'preview_type'        => $this->preview_file_type,
+            'preview_type'        => $this->preview_type ?: ($this->preview_audio ? 'audio' : ($this->preview_video ? 'video' : 'image')),
             'preview_audio_url'   => $previewAudio,
+            'preview_video_url'   => $previewVideo,
             'preview_image_url'   => $previewImage,
             'thumbnail_url'       => $thumbnail,
             'price'               => [

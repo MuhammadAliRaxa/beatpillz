@@ -258,7 +258,7 @@ class AuthorController extends Controller
         $item->extended_price = $request->extended_price ?? ($request->regular_price * 2);
         $item->tags = $request->tags;
         $item->status = Item::STATUS_PENDING; // Sent for reviewer review
-        $item->preview_file_type = Item::PREVIEW_FILE_TYPE_AUDIO;
+        $item->preview_type = Item::PREVIEW_FILE_TYPE_AUDIO;
 
         if ($request->hasFile('preview_audio')) {
             $audioPath = $request->file('preview_audio')->store('previews/audio', 'public');
