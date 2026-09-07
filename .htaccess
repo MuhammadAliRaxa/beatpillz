@@ -5,6 +5,11 @@
 
     RewriteEngine On
 
+    # Handle Authorization Header (Crucial for Laravel Sanctum Bearer Tokens on Apache/cPanel)
+    RewriteCond %{HTTP:Authorization} .
+    RewriteRule .* - [E=HTTP_AUTHORIZATION:%{HTTP:Authorization}]
+    SetEnvIf Authorization "(.*)" HTTP_AUTHORIZATION=$1
+
     RewriteCond %{REQUEST_FILENAME} -d [OR]
     RewriteCond %{REQUEST_FILENAME} -f
     RewriteRule ^ ^$1 [N]
