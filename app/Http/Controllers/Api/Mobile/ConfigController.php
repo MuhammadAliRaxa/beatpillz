@@ -4,7 +4,6 @@ namespace App\Http\Controllers\Api\Mobile;
 
 use App\Http\Controllers\Controller;
 use App\Models\Currency;
-use App\Models\Page;
 use Illuminate\Http\Request;
 
 class ConfigController extends Controller
@@ -17,15 +16,15 @@ class ConfigController extends Controller
         $currencies = Currency::all();
         $defaultCurrency = function_exists('defaultCurrency') ? @defaultCurrency() : null;
 
-        $general = @settings('general');
-        $links = @settings('links');
-        $contact = @settings('contact');
+        $siteName = @settings('general') ? data_get(settings('general'), 'site_name', 'Beat Pillz') : 'Beat Pillz';
+        $siteUrl = url('/');
+        $contactEmail = @settings('contact') ? data_get(settings('contact'), 'email', 'support@beatpillz.com') : 'support@beatpillz.com';
 
         return response()->json([
             'success' => true,
             'config'  => [
-                'site_name'        => $general ? $general->site_name : 'Beat Pillz',
-                'site_url'         => url('/'),
+                'site_name'        => $siteName,
+                'site_url'         => $siteUrl,
                 'default_currency' => $defaultCurrency ? [
                     'code'     => $defaultCurrency->code,
                     'symbol'   => $defaultCurrency->symbol,
@@ -47,13 +46,13 @@ class ConfigController extends Controller
                     ];
                 }),
                 'legal_links'      => [
-                    'terms_of_use'   => $links && $links->terms_of_use_link ? $links->terms_of_use_link : url('/terms-of-use'),
-                    'privacy_policy' => $links && $links->privacy_policy_link ? $links->privacy_policy_link : url('/privacy-policy'),
-                    'refund_policy'  => $links && $links->refund_policy_link ? $links->refund_policy_link : url('/refund-policy'),
+                    'terms_of_use'   => url('/terms-of-use'),
+                    'privacy_policy' => url('/privacy-policy'),
+                    'refund_policy'  => url('/refund-policy'),
                 ],
                 'contact'          => [
-                    'email' => $contact && $contact->email ? $contact->email : 'support@beatpillz.com',
-                    'phone' => $contact && $contact->phone ? $contact->phone : null,
+                    'email' => $contactEmail,
+                    'phone' => null,
                 ],
             ],
         ], 200);

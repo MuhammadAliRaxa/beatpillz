@@ -18,9 +18,17 @@ class ProfileController extends Controller
      */
     public function profile(Request $request)
     {
+        $user = $request->user();
+        if (!$user) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Unauthenticated.',
+            ], 401);
+        }
+
         return response()->json([
             'success' => true,
-            'user'    => new UserResource($request->user()),
+            'user'    => new UserResource($user),
         ], 200);
     }
 
@@ -30,6 +38,7 @@ class ProfileController extends Controller
     public function updateProfile(Request $request)
     {
         $user = $request->user();
+        if (!$user) return response()->json(['success' => false, 'message' => 'Unauthenticated.'], 401);
 
         $validator = Validator::make($request->all(), [
             'firstname'           => ['required', 'string', 'max:50'],
@@ -69,6 +78,7 @@ class ProfileController extends Controller
     public function changePassword(Request $request)
     {
         $user = $request->user();
+        if (!$user) return response()->json(['success' => false, 'message' => 'Unauthenticated.'], 401);
 
         $validator = Validator::make($request->all(), [
             'current_password'      => ['required', 'string'],
@@ -117,6 +127,7 @@ class ProfileController extends Controller
         }
 
         $user = $request->user();
+        if (!$user) return response()->json(['success' => false, 'message' => 'Unauthenticated.'], 401);
 
         if ($request->hasFile('avatar')) {
             $file = $request->file('avatar');
@@ -145,6 +156,7 @@ class ProfileController extends Controller
     public function kycStatus(Request $request)
     {
         $user = $request->user();
+        if (!$user) return response()->json(['success' => false, 'message' => 'Unauthenticated.'], 401);
         $latestKyc = $user->kycVerifications()->latest()->first();
 
         return response()->json([
@@ -166,6 +178,7 @@ class ProfileController extends Controller
     public function becomeAuthor(Request $request)
     {
         $user = $request->user();
+        if (!$user) return response()->json(['success' => false, 'message' => 'Unauthenticated.'], 401);
 
         if ($user->is_author) {
             return response()->json([
@@ -214,6 +227,7 @@ class ProfileController extends Controller
         }
 
         $user = $request->user();
+        if (!$user) return response()->json(['success' => false, 'message' => 'Unauthenticated.'], 401);
         $user->withdrawal_method_id = $request->withdrawal_method_id;
         $user->withdrawal_account = $request->withdrawal_account;
         $user->save();
