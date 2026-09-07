@@ -21,16 +21,18 @@ class PaypalController extends Controller
     public function __construct()
     {
         $this->paymentGateway = paymentGateway('paypal');
-        if ($this->paymentGateway->isSandboxMode()) {
-            $this->environment = new SandboxEnvironment(
-                $this->paymentGateway->credentials->client_id,
-                $this->paymentGateway->credentials->client_secret
-            );
-        } else {
-            $this->environment = new ProductionEnvironment(
-                $this->paymentGateway->credentials->client_id,
-                $this->paymentGateway->credentials->client_secret
-            );
+        if ($this->paymentGateway && isset($this->paymentGateway->credentials)) {
+            if (method_exists($this->paymentGateway, 'isSandboxMode') && $this->paymentGateway->isSandboxMode()) {
+                $this->environment = new SandboxEnvironment(
+                    $this->paymentGateway->credentials->client_id,
+                    $this->paymentGateway->credentials->client_secret
+                );
+            } else {
+                $this->environment = new ProductionEnvironment(
+                    $this->paymentGateway->credentials->client_id,
+                    $this->paymentGateway->credentials->client_secret
+                );
+            }
         }
     }
 

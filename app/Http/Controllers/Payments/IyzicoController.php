@@ -26,11 +26,13 @@ class IyzicoController extends Controller
     public function __construct()
     {
         $this->paymentGateway = paymentGateway('iyzico');
-        $this->options = new Options();
-        $this->options->setApiKey($this->paymentGateway->credentials->api_key);
-        $this->options->setSecretKey($this->paymentGateway->credentials->secret_key);
-        $this->options->setBaseUrl($this->paymentGateway->isSandboxMode() ?
-            'https://sandbox-api.iyzipay.com' : 'https://api.iyzipay.com');
+        if ($this->paymentGateway && isset($this->paymentGateway->credentials)) {
+            $this->options = new Options();
+            $this->options->setApiKey($this->paymentGateway->credentials->api_key);
+            $this->options->setSecretKey($this->paymentGateway->credentials->secret_key);
+            $this->options->setBaseUrl(method_exists($this->paymentGateway, 'isSandboxMode') && $this->paymentGateway->isSandboxMode() ?
+                'https://sandbox-api.iyzipay.com' : 'https://api.iyzipay.com');
+        }
     }
 
     public function process($trx)

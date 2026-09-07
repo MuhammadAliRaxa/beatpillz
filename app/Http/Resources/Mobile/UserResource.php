@@ -22,7 +22,7 @@ class UserResource extends JsonResource
             'is_author'           => (bool) $this->is_author,
             'is_featured_author'  => (bool) $this->is_featured_author,
             'balance'             => (float) $this->balance,
-            'currency'            => function_exists('defaultCurrency') ? @defaultCurrency()->code : 'USD',
+            'currency'            => (function_exists('defaultCurrency') && defaultCurrency()) ? defaultCurrency()->code : 'USD',
             'kyc_status'          => (int) $this->kyc_status,
             'total_sales'         => (int) $this->total_sales,
             'total_sales_amount'  => (float) $this->total_sales_amount,

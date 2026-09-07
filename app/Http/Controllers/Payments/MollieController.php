@@ -17,8 +17,10 @@ class MollieController extends Controller
     public function __construct()
     {
         $this->paymentGateway = paymentGateway('mollie');
-        Config::set(['mollie.key' => trim($this->paymentGateway->credentials->api_key)]);
-        $this->mollieApi = Mollie::api();
+        if ($this->paymentGateway && isset($this->paymentGateway->credentials->api_key)) {
+            Config::set(['mollie.key' => trim($this->paymentGateway->credentials->api_key)]);
+            $this->mollieApi = Mollie::api();
+        }
     }
 
     public function process($trx)

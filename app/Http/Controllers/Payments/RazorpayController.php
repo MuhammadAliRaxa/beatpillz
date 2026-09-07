@@ -17,10 +17,12 @@ class RazorpayController extends Controller
     public function __construct()
     {
         $this->paymentGateway = paymentGateway('razorpay');
-        $this->api = new Api(
-            $this->paymentGateway->credentials->key_id,
-            $this->paymentGateway->credentials->key_secret
-        );
+        if ($this->paymentGateway && isset($this->paymentGateway->credentials)) {
+            $this->api = new Api(
+                $this->paymentGateway->credentials->key_id,
+                $this->paymentGateway->credentials->key_secret
+            );
+        }
     }
 
     public function process($trx)

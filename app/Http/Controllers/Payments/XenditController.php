@@ -18,7 +18,9 @@ class XenditController extends Controller
     public function __construct()
     {
         $this->paymentGateway = paymentGateway('xendit');
-        Configuration::setXenditKey($this->paymentGateway->credentials->api_secret_key);
+        if ($this->paymentGateway && isset($this->paymentGateway->credentials->api_secret_key)) {
+            Configuration::setXenditKey($this->paymentGateway->credentials->api_secret_key);
+        }
     }
 
     public function process($trx)

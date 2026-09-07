@@ -16,11 +16,13 @@ class FlutterwaveController extends Controller
     public function __construct()
     {
         $this->paymentGateway = paymentGateway('flutterwave');
-        Config::set(['flutterwave' => [
-            'publicKey' => $this->paymentGateway->credentials->public_key,
-            'secretKey' => $this->paymentGateway->credentials->secret_key,
-            'secretHash' => $this->paymentGateway->credentials->secret_hash,
-        ]]);
+        if ($this->paymentGateway && isset($this->paymentGateway->credentials)) {
+            Config::set(['flutterwave' => [
+                'publicKey' => $this->paymentGateway->credentials->public_key,
+                'secretKey' => $this->paymentGateway->credentials->secret_key,
+                'secretHash' => $this->paymentGateway->credentials->secret_hash,
+            ]]);
+        }
     }
 
     public function process($trx)
