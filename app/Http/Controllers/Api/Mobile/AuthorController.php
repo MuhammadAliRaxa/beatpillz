@@ -248,6 +248,9 @@ class AuthorController extends Controller
     /**
      * Upload a new beat / item.
      */
+    /**
+     * Upload a new beat / item with full metadata, category attributes, files, and licensing.
+     */
     public function uploadBeat(Request $request)
     {
         $author = $request->user();
@@ -266,15 +269,33 @@ class AuthorController extends Controller
         }
 
         $validator = Validator::make($request->all(), [
-            'name'             => ['required', 'string', 'max:150'],
-            'category_id'      => ['required', 'exists:categories,id'],
-            'sub_category_id'  => ['nullable', 'exists:sub_categories,id'],
-            'description'      => ['required', 'string'],
-            'regular_price'    => ['required', 'numeric', 'min:1'],
-            'extended_price'   => ['nullable', 'numeric', 'min:1'],
-            'tags'             => ['nullable', 'string', 'max:255'],
-            'preview_audio'    => ['nullable', 'file', 'mimes:mp3,wav,ogg,m4a', 'max:30720'],
-            'thumbnail'        => ['nullable', 'image', 'mimes:jpeg,png,jpg,webp', 'max:5120'],
+            'name'                   => ['required', 'string', 'max:150'],
+            'description'            => ['required', 'string'],
+            'category_id'            => ['nullable'],
+            'category'               => ['nullable', 'string'],
+            'sub_category_id'        => ['nullable'],
+            'sub_category'           => ['nullable', 'string'],
+            'version'                => ['nullable', 'string', 'max:50'],
+            'demo_link'              => ['nullable', 'string', 'max:255'],
+            'tags'                   => ['nullable'],
+            'regular_price'          => ['nullable', 'numeric'],
+            'regular_license_price'  => ['nullable', 'numeric'],
+            'extended_price'         => ['nullable', 'numeric'],
+            'extended_license_price' => ['nullable', 'numeric'],
+            'is_supported'           => ['nullable'],
+            'support'                => ['nullable'],
+            'support_instructions'   => ['nullable', 'string', 'max:2000'],
+            'is_free'                => ['nullable'],
+            'free_item'              => ['nullable'],
+            'purchasing_status'      => ['nullable'],
+            'main_file_source'       => ['nullable'],
+            'main_file_link'         => ['nullable', 'string', 'max:500'],
+            'message'                => ['nullable', 'string', 'max:3000'],
+            'thumbnail'              => ['nullable'],
+            'preview_image'          => ['nullable'],
+            'preview_video'          => ['nullable'],
+            'preview_audio'          => ['nullable'],
+            'main_file'              => ['nullable'],
         ]);
 
         if ($validator->fails()) {
@@ -285,21 +306,69 @@ class AuthorController extends Controller
             ], 422);
         }
 
+        // Resolve Category ID
+        $categoryId = $request->category_id;
+        if (!$categoryId && $request->filled('category')) {
+            $catSlugOrName = $request->category;
+            $cat = \App\Models\Category::where('slug', $catSlugOrName)
+                ->orWhere('name', $catSlugOrName)
+                ->orWhere('id', $catSlugOrName)
+                ->first();
+            $categoryId = $cat ? $cat->id : 21;
+        }
+        if (!$categoryId) {
+            $categoryId = 21; // Default to Afrobeats
+        }
+
+        // Resolve SubCategory ID
+        $subCategoryId = $request->sub_category_id;
+        if (!$subCategoryId && $request->filled('sub_category')) {
+            $subSlugOrName = $request->sub_category;
+            $subCat = \App\Models\SubCategory::where('slug', $subSlugOrName)
+                ->orWhere('name', $subSlugOrName)
+                ->orWhere('id', $subSlugOrName)
+                ->first();
+            $subCategoryId = $subCat ? $subCat->id : null;
+        }
+
+        // Pricing
+        $regularPrice = $request->regular_license_price ?? $request->regular_price ?? 29.99;
+        $extendedPrice = $request->extended_license_price ?? $request->extended_price ?? ($regularPrice * 2);
+
+        // Tags
+        $tags = $request->tags;
+        if (is_array($tags)) {
+            $tags = implode(', ', $tags);
+        }
+
         $item = new Item();
         $item->author_id = $author->id;
         $item->name = $request->name;
-        $item->category_id = $request->category_id;
-        $item->sub_category_id = $request->sub_category_id;
         $item->description = $request->description;
-        $item->regular_price = $request->regular_price;
-        $item->extended_price = $request->extended_price ?? ($request->regular_price * 2);
-        $item->tags = $request->tags;
-        $item->status = Item::STATUS_PENDING; // Sent for reviewer review
+        $item->category_id = $categoryId;
+        $item->sub_category_id = $subCategoryId;
+        $item->version = $request->version ?? '1.0';
+        $item->demo_link = $request->demo_link;
+        $item->tags = $tags;
+        $item->regular_price = (float) $regularPrice;
+        $item->extended_price = (float) $extendedPrice;
+        $item->is_supported = (bool) ($request->support ?? $request->is_supported ?? false);
+        $item->support_instructions = $item->is_supported ? $request->support_instructions : null;
+        $item->is_free = (bool) ($request->free_item ?? $request->is_free ?? false);
+        $item->purchasing_status = $request->filled('purchasing_status') ? (int) $request->purchasing_status : 1;
+        $item->status = Item::STATUS_PENDING; // Sent for reviewer approval
         $item->preview_type = Item::PREVIEW_FILE_TYPE_AUDIO;
 
+        // Handle File Uploads if present
         if ($request->hasFile('preview_audio')) {
             $audioPath = $request->file('preview_audio')->store('previews/audio', 'public');
             $item->preview_audio = 'storage/' . $audioPath;
+        }
+
+        if ($request->hasFile('preview_video')) {
+            $videoPath = $request->file('preview_video')->store('previews/video', 'public');
+            $item->preview_video = 'storage/' . $videoPath;
+            $item->preview_type = Item::PREVIEW_FILE_TYPE_VIDEO;
         }
 
         if ($request->hasFile('thumbnail')) {
@@ -307,7 +376,33 @@ class AuthorController extends Controller
             $item->thumbnail = 'storage/' . $thumbPath;
         }
 
+        if ($request->hasFile('preview_image')) {
+            $previewImagePath = $request->file('preview_image')->store('previews/images', 'public');
+            $item->preview_image = 'storage/' . $previewImagePath;
+        }
+
+        if ($request->hasFile('main_file')) {
+            $mainFilePath = $request->file('main_file')->store('items/main', 'public');
+            $item->main_file = 'storage/' . $mainFilePath;
+            $item->is_main_file_external = 0;
+        } elseif ($request->filled('main_file_link')) {
+            $item->main_file = $request->main_file_link;
+            $item->is_main_file_external = 1;
+        }
+
         $item->save();
+
+        // Create initial ItemHistory if model exists
+        if (class_exists('\\App\\Models\\ItemHistory')) {
+            try {
+                $history = new \App\Models\ItemHistory();
+                $history->item_id = $item->id;
+                $history->author_id = $author->id;
+                $history->title = \App\Models\ItemHistory::TITLE_SUBMISSION ?? 'Submission';
+                $history->body = $request->message ?? 'Submitted for review from Mobile Studio';
+                $history->save();
+            } catch (\Throwable $th) {}
+        }
 
         return response()->json([
             'success' => true,
@@ -318,7 +413,9 @@ class AuthorController extends Controller
                 'slug'          => $item->slug,
                 'status'        => $item->status,
                 'status_name'   => $item->getStatusName(),
+                'category_id'   => $item->category_id,
                 'regular_price' => (float) $item->regular_price,
+                'extended_price'=> (float) $item->extended_price,
             ],
         ], 201);
     }
