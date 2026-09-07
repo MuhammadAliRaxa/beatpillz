@@ -32,6 +32,24 @@ Route::name('api.')->namespace('Api')->middleware('api.disable')->group(function
 |--------------------------------------------------------------------------
 */
 Route::namespace('Api\Mobile')->prefix('v1')->name('api.v1.')->group(function () {
+    // Test Headers & Sanctum Auth Debug Route
+    Route::get('debug-auth', function (\Illuminate\Http\Request $request) {
+        $token = $request->bearerToken();
+        $pat = null;
+        if ($token) {
+            $pat = \Laravel\Sanctum\PersonalAccessToken::findToken($token);
+        }
+        return response()->json([
+            'headers' => $request->headers->all(),
+            'server_auth' => $_SERVER['HTTP_AUTHORIZATION'] ?? $_SERVER['REDIRECT_HTTP_AUTHORIZATION'] ?? $_SERVER['Authorization'] ?? null,
+            'bearer_token' => $token,
+            'token_model_found' => $pat !== null,
+            'token_user' => $pat ? $pat->tokenable : null,
+            'auth_sanctum_check' => auth('sanctum')->check(),
+            'auth_sanctum_user' => auth('sanctum')->user(),
+        ]);
+    });
+
 
     // Global App Configuration
     Route::get('config', 'ConfigController@index')->name('config');
