@@ -17,6 +17,12 @@ class TicketController extends Controller
     public function index(Request $request)
     {
         $user = $request->user();
+        if (!$user) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Unauthenticated.',
+            ], 401);
+        }
         $tickets = Ticket::where('user_id', $user->id)
             ->with('category')
             ->orderBy('id', 'desc')
@@ -84,6 +90,12 @@ class TicketController extends Controller
         }
 
         $user = $request->user();
+        if (!$user) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Unauthenticated.',
+            ], 401);
+        }
 
         $ticket = new Ticket();
         $ticket->user_id = $user->id;
@@ -116,6 +128,12 @@ class TicketController extends Controller
     public function show(Request $request, $id)
     {
         $user = $request->user();
+        if (!$user) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Unauthenticated.',
+            ], 401);
+        }
         $ticket = Ticket::where('id', $id)
             ->where('user_id', $user->id)
             ->with(['category', 'replies.user', 'replies.admin'])
@@ -176,6 +194,12 @@ class TicketController extends Controller
         }
 
         $user = $request->user();
+        if (!$user) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Unauthenticated.',
+            ], 401);
+        }
         $ticket = Ticket::where('id', $id)->where('user_id', $user->id)->first();
 
         if (!$ticket) {

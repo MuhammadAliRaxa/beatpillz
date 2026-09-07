@@ -209,6 +209,12 @@ class ItemController extends Controller
         }
 
         $user = $request->user();
+        if (!$user) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Unauthenticated.',
+            ], 401);
+        }
         $item = Item::where('status', Item::STATUS_APPROVED)->findOrFail($id);
 
         if (!$user->hasPurchasedItem($item->id)) {
@@ -354,6 +360,12 @@ class ItemController extends Controller
     public function toggleFavorite(Request $request, $id)
     {
         $user = $request->user();
+        if (!$user) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Unauthenticated.',
+            ], 401);
+        }
         $item = Item::where('status', Item::STATUS_APPROVED)->findOrFail($id);
 
         $favorite = Favorite::where('user_id', $user->id)->where('item_id', $item->id)->first();
@@ -384,6 +396,12 @@ class ItemController extends Controller
     public function favorites(Request $request)
     {
         $user = $request->user();
+        if (!$user) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Unauthenticated.',
+            ], 401);
+        }
         $favorites = $user->favorites()->with('item.author', 'item.discount')->latest()->paginate(15);
 
         $items = $favorites->getCollection()->map(function ($fav) {

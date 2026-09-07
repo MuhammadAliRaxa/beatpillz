@@ -25,6 +25,12 @@ class CheckoutController extends Controller
     public function gateways(Request $request)
     {
         $user = $request->user();
+        if (!$user) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Unauthenticated.',
+            ], 401);
+        }
         $gateways = PaymentGateway::where('status', 1)
             ->orderBy('sort_id', 'asc')
             ->get();
@@ -51,6 +57,12 @@ class CheckoutController extends Controller
     public function createTransaction(Request $request)
     {
         $user = $request->user();
+        if (!$user) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Unauthenticated.',
+            ], 401);
+        }
         $cartItems = CartItem::where('user_id', $user->id)
             ->with(['item.category', 'item.discount'])
             ->get();
@@ -116,6 +128,12 @@ class CheckoutController extends Controller
         }
 
         $user = $request->user();
+        if (!$user) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Unauthenticated.',
+            ], 401);
+        }
         $transaction = Transaction::where('id', $request->transaction_id)
             ->where('user_id', $user->id)
             ->where('status', Transaction::STATUS_UNPAID)

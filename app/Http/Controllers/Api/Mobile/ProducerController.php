@@ -60,6 +60,12 @@ class ProducerController extends Controller
     public function toggleFollow(Request $request, $id)
     {
         $user = $request->user();
+        if (!$user) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Unauthenticated.',
+            ], 401);
+        }
 
         if ($user->id == $id) {
             return response()->json([
@@ -102,6 +108,12 @@ class ProducerController extends Controller
     public function following(Request $request)
     {
         $user = $request->user();
+        if (!$user) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Unauthenticated.',
+            ], 401);
+        }
         $following = $user->followings()->with('following')->paginate(15);
 
         return response()->json([

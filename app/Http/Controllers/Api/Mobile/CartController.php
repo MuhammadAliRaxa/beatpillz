@@ -56,6 +56,12 @@ class CartController extends Controller
         }
 
         $user = $request->user();
+        if (!$user) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Unauthenticated.',
+            ], 401);
+        }
         $item = Item::where('status', Item::STATUS_APPROVED)->findOrFail($request->item_id);
 
         if ($item->author_id == $user->id) {
@@ -93,6 +99,12 @@ class CartController extends Controller
     public function remove(Request $request, $id)
     {
         $user = $request->user();
+        if (!$user) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Unauthenticated.',
+            ], 401);
+        }
         $cartItem = CartItem::where('user_id', $user->id)->where('id', $id)->first();
 
         if (!$cartItem) {
@@ -116,6 +128,12 @@ class CartController extends Controller
     public function clear(Request $request)
     {
         $user = $request->user();
+        if (!$user) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Unauthenticated.',
+            ], 401);
+        }
         CartItem::where('user_id', $user->id)->delete();
 
         return response()->json([

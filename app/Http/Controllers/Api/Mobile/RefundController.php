@@ -18,6 +18,12 @@ class RefundController extends Controller
     public function index(Request $request)
     {
         $user = $request->user();
+        if (!$user) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Unauthenticated.',
+            ], 401);
+        }
         $refunds = Refund::where(function ($q) use ($user) {
             $q->where('user_id', $user->id)
               ->orWhere('author_id', $user->id);
@@ -71,6 +77,12 @@ class RefundController extends Controller
         }
 
         $user = $request->user();
+        if (!$user) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Unauthenticated.',
+            ], 401);
+        }
         $purchase = Purchase::where('id', $request->purchase_id)
             ->where('user_id', $user->id)
             ->where('status', Purchase::STATUS_ACTIVE)
@@ -122,6 +134,12 @@ class RefundController extends Controller
     public function show(Request $request, $id)
     {
         $user = $request->user();
+        if (!$user) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Unauthenticated.',
+            ], 401);
+        }
         $refund = Refund::where('id', $id)
             ->where(function ($q) use ($user) {
                 $q->where('user_id', $user->id)->orWhere('author_id', $user->id);
@@ -179,6 +197,12 @@ class RefundController extends Controller
         }
 
         $user = $request->user();
+        if (!$user) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Unauthenticated.',
+            ], 401);
+        }
         $refund = Refund::where('id', $id)
             ->where(function ($q) use ($user) {
                 $q->where('user_id', $user->id)->orWhere('author_id', $user->id);
