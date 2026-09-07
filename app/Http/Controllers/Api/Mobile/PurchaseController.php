@@ -17,6 +17,7 @@ class PurchaseController extends Controller
     public function index(Request $request)
     {
         $user = $request->user();
+        if (!$user) return response()->json(['success' => false, 'message' => 'Unauthenticated.'], 401);
         $query = Purchase::where('user_id', $user->id)
             ->where('status', Purchase::STATUS_ACTIVE)
             ->with(['item.author', 'item.category', 'item.discount']);
@@ -51,6 +52,7 @@ class PurchaseController extends Controller
     public function download(Request $request, $id)
     {
         $user = $request->user();
+        if (!$user) return response()->json(['success' => false, 'message' => 'Unauthenticated.'], 401);
         $purchase = Purchase::where('id', $id)
             ->where('user_id', $user->id)
             ->where('status', Purchase::STATUS_ACTIVE)
@@ -90,6 +92,7 @@ class PurchaseController extends Controller
     public function statements(Request $request)
     {
         $user = $request->user();
+        if (!$user) return response()->json(['success' => false, 'message' => 'Unauthenticated.'], 401);
         $statements = Statement::where('user_id', $user->id)
             ->with('item')
             ->orderBy('id', 'desc')

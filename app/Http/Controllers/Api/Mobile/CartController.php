@@ -17,6 +17,7 @@ class CartController extends Controller
     public function index(Request $request)
     {
         $user = $request->user();
+        if (!$user) return response()->json(['success' => false, 'message' => 'Unauthenticated.'], 401);
         $cartItems = CartItem::where('user_id', $user->id)
             ->with(['item.author', 'item.category', 'item.discount'])
             ->get();

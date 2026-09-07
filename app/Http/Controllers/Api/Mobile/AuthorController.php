@@ -20,6 +20,12 @@ class AuthorController extends Controller
     public function dashboard(Request $request)
     {
         $author = $request->user();
+        if (!$author) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Unauthenticated.',
+            ], 401);
+        }
 
         if (!$author->is_author) {
             return response()->json([
@@ -59,6 +65,12 @@ class AuthorController extends Controller
     public function items(Request $request)
     {
         $author = $request->user();
+        if (!$author) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Unauthenticated.',
+            ], 401);
+        }
         $query = Item::where('author_id', $author->id)->with(['category', 'discount']);
 
         if ($request->filled('status')) {
@@ -97,6 +109,12 @@ class AuthorController extends Controller
     public function sales(Request $request)
     {
         $author = $request->user();
+        if (!$author) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Unauthenticated.',
+            ], 401);
+        }
         $sales = Sale::where('author_id', $author->id)
             ->with(['item', 'buyer'])
             ->orderBy('id', 'desc')
@@ -137,6 +155,13 @@ class AuthorController extends Controller
     public function withdrawals(Request $request)
     {
         $author = $request->user();
+        if (!$author) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Unauthenticated.',
+            ], 401);
+        }
+
         $methods = WithdrawalMethod::all();
         $withdrawals = Withdrawal::where('author_id', $author->id)
             ->orderBy('id', 'desc')
@@ -177,6 +202,12 @@ class AuthorController extends Controller
     public function requestWithdrawal(Request $request)
     {
         $author = $request->user();
+        if (!$author) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Unauthenticated.',
+            ], 401);
+        }
 
         if (!$author->hasWithdrawalAccount()) {
             return response()->json([
@@ -220,6 +251,12 @@ class AuthorController extends Controller
     public function uploadBeat(Request $request)
     {
         $author = $request->user();
+        if (!$author) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Unauthenticated.',
+            ], 401);
+        }
 
         if (!$author->is_author) {
             return response()->json([
@@ -292,6 +329,12 @@ class AuthorController extends Controller
     public function deleteBeat(Request $request, $id)
     {
         $author = $request->user();
+        if (!$author) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Unauthenticated.',
+            ], 401);
+        }
         $item = Item::where('author_id', $author->id)->where('id', $id)->first();
 
         if (!$item) {
