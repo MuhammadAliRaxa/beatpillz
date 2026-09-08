@@ -63,12 +63,159 @@ class ProfileController extends Controller
         if ($request->has('social_links')) {
             $user->profile_social_links = $request->social_links;
         }
+
+        if ($request->filled('email')) {
+            $user->email = $request->email;
+        }
+
+        if ($request->has('address_line_1') || $request->has('country')) {
+            $user->address = [
+                'line_1'  => $request->input('address_line_1', @$user->address->line_1),
+                'line_2'  => $request->input('address_line_2', @$user->address->line_2),
+                'city'    => $request->input('city', @$user->address->city),
+                'state'   => $request->input('state', @$user->address->state),
+                'zip'     => $request->input('zip', @$user->address->zip),
+                'country' => $request->input('country', @$user->address->country),
+            ];
+            if ($request->filled('country') && method_exists($user, 'addCountryBadge')) {
+                $user->addCountryBadge($request->country);
+            }
+        }
+
+        if ($user->isAuthor() && $request->filled('exclusivity')) {
+            $user->exclusivity = $request->exclusivity;
+            $user->addExclusiveAuthorBadge();
+        }
+
         $user->save();
 
         return response()->json([
             'success' => true,
             'message' => 'Profile updated successfully.',
-            'user'    => new UserResource($user),
+            'user'    => new UserResource($user->fresh()),
+        ], 200);
+    }
+
+    /**
+     * Update user account details (first/last name, email, billing address, exclusivity).
+     */
+    public function updateAccountDetails(Request $request)
+    {
+        $user = $request->user();
+        if (!$user) return response()->json(['success' => false, 'message' => 'Unauthenticated.'], 401);
+
+        $validator = Validator::make($request->all(), [
+            'firstname'      => ['required', 'string', 'max:50'],
+            'lastname'       => ['required', 'string', 'max:50'],
+            'email'          => ['required', 'string', 'email', 'max:100', 'unique:users,email,' . $user->id],
+            'address_line_1' => ['required', 'string', 'max:255'],
+            'address_line_2' => ['nullable', 'string', 'max:255'],
+            'city'           => ['required', 'string', 'max:150'],
+            'state'          => ['required', 'string', 'max:150'],
+            'zip'            => ['required', 'string', 'max:100'],
+            'country'        => ['required', 'string', 'max:50'],
+            'exclusivity'    => ['nullable', 'string', 'in:exclusive,non_exclusive'],
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'success' => false,
+                'message' => $validator->errors()->first(),
+                'errors'  => $validator->errors(),
+            ], 422);
+        }
+
+        $country = $request->country;
+
+        $address = [
+            'line_1'  => $request->address_line_1,
+            'line_2'  => $request->address_line_2,
+            'city'    => $request->city,
+            'state'   => $request->state,
+            'zip'     => $request->zip,
+            'country' => $country,
+        ];
+
+        $user->firstname = $request->firstname;
+        $user->lastname  = $request->lastname;
+        $user->email     = $request->email;
+        $user->address   = $address;
+
+        if ($user->isAuthor() && $request->filled('exclusivity')) {
+            $user->exclusivity = $request->exclusivity;
+            $user->addExclusiveAuthorBadge();
+        }
+
+        $user->save();
+
+        if (method_exists($user, 'addCountryBadge')) {
+            $user->addCountryBadge($country);
+        }
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Account details updated successfully.',
+            'user'    => new UserResource($user->fresh()),
+        ], 200);
+    }
+
+    /**
+     * Get referral program stats and referred users list.
+     */
+    public function referrals(Request $request)
+    {
+        $user = $request->user();
+        if (!$user) return response()->json(['success' => false, 'message' => 'Unauthenticated.'], 401);
+
+        if (!@settings('referral')->status) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Referral program is currently disabled.',
+            ], 404);
+        }
+
+        $query = \App\Models\Referral::where('author_id', $user->id);
+
+        if ($request->filled('search')) {
+            $searchTerm = '%' . $request->search . '%';
+            $query->whereHas('user', function ($q) use ($searchTerm) {
+                $q->where('username', 'like', $searchTerm);
+            });
+        }
+
+        $totalEarnings = (float) \App\Models\Referral::where('author_id', $user->id)->sum('earnings');
+        $referrals = $query->with('user')->orderByDesc('id')->paginate(20);
+
+        return response()->json([
+            'success' => true,
+            'data'    => [
+                'referral_code'         => $user->username,
+                'referral_link'         => $user->getReferralLink(),
+                'commission_percentage' => (float) (@settings('referral')->percentage ?? 0),
+                'stats'                 => [
+                    'total_referrals' => $referrals->total(),
+                    'total_earnings'  => $totalEarnings,
+                    'currency'        => (function_exists('defaultCurrency') && defaultCurrency()) ? defaultCurrency()->code : 'USD',
+                ],
+                'referrals'             => $referrals->map(function ($ref) {
+                    return [
+                        'id'         => $ref->id,
+                        'user'       => $ref->user ? [
+                            'id'       => $ref->user->id,
+                            'username' => $ref->user->username,
+                            'avatar'   => $ref->user->avatar ? asset($ref->user->avatar) : null,
+                        ] : null,
+                        'earnings'   => (float) $ref->earnings,
+                        'created_at' => $ref->created_at ? $ref->created_at->toISOString() : null,
+                    ];
+                }),
+                'meta'                  => [
+                    'current_page' => $referrals->currentPage(),
+                    'last_page'    => $referrals->lastPage(),
+                    'per_page'     => $referrals->perPage(),
+                    'total'        => $referrals->total(),
+                ],
+            ],
         ], 200);
     }
 

@@ -320,6 +320,53 @@ Authorization: Bearer <access_token>
 
 ---
 
+### `PUT /user/account-details`
+* **Auth**: Bearer Token Required
+* **Description**: Updates user's personal account and billing address details (matching the web settings screen).
+* **Payload**:
+```json
+{
+  "firstname": "Favour",
+  "lastname": "Ebuka",
+  "email": "beatpillz.ng@gmail.com",
+  "address_line_1": "123 water park view",
+  "address_line_2": null,
+  "city": "Lagos",
+  "state": "Lagos",
+  "zip": "234001",
+  "country": "NG",
+  "exclusivity": "exclusive"
+}
+```
+* **Response `200 OK`**:
+```json
+{
+  "success": true,
+  "message": "Account details updated successfully.",
+  "user": {
+    "id": 10,
+    "firstname": "Favour",
+    "lastname": "Ebuka",
+    "fullname": "Favour Ebuka",
+    "username": "ebukabeats",
+    "email": "beatpillz.ng@gmail.com",
+    "is_author": true,
+    "exclusivity": "exclusive",
+    "address": {
+      "line_1": "123 water park view",
+      "line_2": null,
+      "city": "Lagos",
+      "state": "Lagos",
+      "zip": "234001",
+      "country": "NG",
+      "country_name": "Nigeria"
+    }
+  }
+}
+```
+
+---
+
 ### `POST /user/avatar`
 * **Auth**: Bearer Token Required
 * **Content-Type**: `multipart/form-data`

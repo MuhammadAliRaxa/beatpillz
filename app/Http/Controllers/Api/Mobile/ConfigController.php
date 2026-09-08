@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Api\Mobile;
 
+use App\Classes\Country;
 use App\Http\Controllers\Controller;
 use App\Models\Currency;
 use Illuminate\Http\Request;
@@ -55,6 +56,25 @@ class ConfigController extends Controller
                     'phone' => null,
                 ],
             ],
+        ], 200);
+    }
+
+    /**
+     * Get all available countries for selection.
+     */
+    public function countries()
+    {
+        $countries = [];
+        foreach (Country::all() as $code => $name) {
+            $countries[] = [
+                'code' => $code,
+                'name' => $name,
+            ];
+        }
+
+        return response()->json([
+            'success'   => true,
+            'countries' => $countries,
         ], 200);
     }
 }

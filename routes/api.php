@@ -53,6 +53,7 @@ Route::namespace('Api\Mobile')->prefix('v1')->name('api.v1.')->group(function ()
 
     // Global App Configuration
     Route::get('config', 'ConfigController@index')->name('config');
+    Route::get('countries', 'ConfigController@countries')->name('countries');
 
     // Public Auth Endpoints
     Route::prefix('auth')->name('auth.')->group(function () {
@@ -104,6 +105,7 @@ Route::namespace('Api\Mobile')->prefix('v1')->name('api.v1.')->group(function ()
         Route::prefix('user')->name('user.')->group(function () {
             Route::get('profile', 'ProfileController@profile')->name('profile');
             Route::put('profile', 'ProfileController@updateProfile')->name('profile.update');
+            Route::put('account-details', 'ProfileController@updateAccountDetails')->name('account-details.update');
             Route::post('avatar', 'ProfileController@updateAvatar')->name('avatar.update');
             Route::put('password', 'ProfileController@changePassword')->name('password.update');
             Route::get('kyc', 'ProfileController@kycStatus')->name('kyc.status');
@@ -111,6 +113,7 @@ Route::namespace('Api\Mobile')->prefix('v1')->name('api.v1.')->group(function ()
             Route::put('withdrawal-account', 'ProfileController@updateWithdrawalAccount')->name('withdrawal-account');
             Route::get('following', 'ProducerController@following')->name('following');
             Route::get('subscription', 'PlanController@userSubscription')->name('subscription');
+            Route::get('referrals', 'ProfileController@referrals')->name('referrals');
 
             // Library & Downloads
             Route::get('purchases', 'PurchaseController@index')->name('purchases');
