@@ -349,7 +349,7 @@ class AuthorController extends Controller
         $item->sub_category_id = $subCategoryId;
         $item->version = $request->version ?? '1.0';
         $item->demo_link = $request->demo_link;
-        $item->tags = $tags;
+        $item->tags = $tags ?: 'beat';
         $item->regular_price = (float) $regularPrice;
         $item->extended_price = (float) $extendedPrice;
         $item->is_supported = (bool) ($request->support ?? $request->is_supported ?? false);
@@ -388,9 +388,19 @@ class AuthorController extends Controller
         } elseif ($request->filled('main_file_link')) {
             $item->main_file = $request->main_file_link;
             $item->is_main_file_external = 1;
+        } else {
+            $item->main_file = 'pending';
+            $item->is_main_file_external = 0;
         }
 
-        $item->save();
+        try {
+            $item->save();
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to save beat: ' . $e->getMessage(),
+            ], 500);
+        }
 
         // Create initial ItemHistory if model exists
         if (class_exists('\\App\\Models\\ItemHistory')) {
