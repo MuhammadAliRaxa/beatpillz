@@ -289,13 +289,16 @@ class AuthorController extends Controller
             'free_item'              => ['nullable'],
             'purchasing_status'      => ['nullable'],
             'main_file_source'       => ['nullable'],
-            'main_file_link'         => ['nullable', 'string', 'max:500'],
+            'main_file'              => ['required_without:main_file_link'],
+            'main_file_link'         => ['required_without:main_file', 'nullable', 'url', 'max:500'],
             'message'                => ['nullable', 'string', 'max:3000'],
             'thumbnail'              => ['nullable'],
             'preview_image'          => ['nullable'],
             'preview_video'          => ['nullable'],
             'preview_audio'          => ['nullable'],
-            'main_file'              => ['nullable'],
+        ], [
+            'main_file.required_without'      => 'A main file (ZIP package containing WAV/stems/MP3) is required unless an external main file link is provided.',
+            'main_file_link.required_without' => 'An external main file link is required unless a main file is uploaded.',
         ]);
 
         if ($validator->fails()) {
@@ -389,8 +392,13 @@ class AuthorController extends Controller
             $item->main_file = $request->main_file_link;
             $item->is_main_file_external = 1;
         } else {
-            $item->main_file = 'pending';
-            $item->is_main_file_external = 0;
+            return response()->json([
+                'success' => false,
+                'message' => 'A main file (ZIP package) or external main file link is required.',
+                'errors'  => [
+                    'main_file' => ['A main file (ZIP package) or external main file link is required.'],
+                ],
+            ], 422);
         }
 
         try {
