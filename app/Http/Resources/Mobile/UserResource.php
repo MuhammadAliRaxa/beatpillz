@@ -12,7 +12,7 @@ class UserResource extends JsonResource
             return [];
         }
 
-        // Safely parse address as an array whether it is stored as array, JSON string, or object
+        // 1. Safely parse address (array, JSON string, or object)
         $address = [];
         if (is_array($this->address)) {
             $address = $this->address;
@@ -20,6 +20,31 @@ class UserResource extends JsonResource
             $address = json_decode($this->address, true) ?? [];
         } elseif (is_object($this->address)) {
             $address = (array) $this->address;
+        }
+
+        // 2. Safely parse social links (check social_links column first)
+        $socialLinks = [];
+        $rawSocial = $this->social_links ?? $this->profile_social_links ?? null;
+        if (is_array($rawSocial)) {
+            $socialLinks = $rawSocial;
+        } elseif (is_string($rawSocial)) {
+            $socialLinks = json_decode($rawSocial, true) ?? [];
+        }
+
+        // 3. Safely format currency
+        $currency = 'USD';
+        try {
+            if (function_exists('defaultCurrency') && defaultCurrency() && isset(defaultCurrency()->code)) {
+                $currency = defaultCurrency()->code;
+            }
+        } catch (\Throwable $e) {}
+
+        // 4. Safely format created_at date without crashing on raw date strings
+        $createdAt = null;
+        if ($this->created_at) {
+            $createdAt = (is_object($this->created_at) && method_exists($this->created_at, 'toISOString'))
+                ? $this->created_at->toISOString()
+                : (string) $this->created_at;
         }
 
         return [
@@ -46,15 +71,15 @@ class UserResource extends JsonResource
                 'country_name' => method_exists($this->resource, 'getCountry') ? ($this->getCountry() ?? '') : ($address['country'] ?? ''),
             ],
             'balance'             => (float) $this->balance,
-            'currency'            => (function_exists('defaultCurrency') && defaultCurrency()) ? defaultCurrency()->code : 'USD',
+            'currency'            => $currency,
             'kyc_status'          => (int) $this->kyc_status,
             'total_sales'         => (int) $this->total_sales,
             'total_sales_amount'  => (float) $this->total_sales_amount,
             'total_reviews'       => (int) $this->total_reviews,
             'avg_reviews'         => (float) $this->avg_reviews,
             'total_followers'     => (int) $this->total_followers,
-            'social_links'        => is_string($this->profile_social_links) ? (json_decode($this->profile_social_links, true) ?? []) : ($this->profile_social_links ?? []),
-            'created_at'          => $this->created_at ? $this->created_at->toISOString() : null,
+            'social_links'        => $socialLinks,
+            'created_at'          => $createdAt,
         ];
     }
 }
