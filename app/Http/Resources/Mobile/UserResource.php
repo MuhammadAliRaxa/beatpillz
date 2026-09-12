@@ -47,6 +47,19 @@ class UserResource extends JsonResource
                 : (string) $this->created_at;
         }
 
+        // 5. Safely resolve country_name without crashing if Country::get() fails on full country names like 'Nigeria'
+        $countryName = $address['country'] ?? ($this->country ?? '');
+        try {
+            if (method_exists($this->resource, 'getCountry')) {
+                $resolved = $this->getCountry();
+                if (!empty($resolved)) {
+                    $countryName = $resolved;
+                }
+            }
+        } catch (\Throwable $e) {
+            $countryName = $address['country'] ?? ($this->country ?? '');
+        }
+
         return [
             'id'                  => $this->id,
             'firstname'           => $this->firstname,
@@ -67,8 +80,8 @@ class UserResource extends JsonResource
                 'city'         => $address['city'] ?? '',
                 'state'        => $address['state'] ?? '',
                 'zip'          => $address['zip'] ?? $address['postal_code'] ?? '',
-                'country'      => $address['country'] ?? '',
-                'country_name' => method_exists($this->resource, 'getCountry') ? ($this->getCountry() ?? '') : ($address['country'] ?? ''),
+                'country'      => $address['country'] ?? ($this->country ?? ''),
+                'country_name' => $countryName,
             ],
             'balance'             => (float) $this->balance,
             'currency'            => $currency,
