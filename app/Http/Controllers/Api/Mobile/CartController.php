@@ -43,6 +43,15 @@ class CartController extends Controller
      */
     public function add(Request $request)
     {
+        if ($request->has('license_type')) {
+            $raw = strtolower(trim((string) $request->license_type));
+            if (in_array($raw, ['2', 'extended', 'premium wav', 'exclusive rights', 'trackout stems', 'exclusive', 'stem', 'stems'])) {
+                $request->merge(['license_type' => '2']);
+            } elseif (in_array($raw, ['1', 'regular', 'standard mp3', 'mp3', 'non-exclusive', 'basic'])) {
+                $request->merge(['license_type' => '1']);
+            }
+        }
+
         $validator = Validator::make($request->all(), [
             'item_id'      => ['required', 'exists:items,id'],
             'license_type' => ['required', 'in:1,2'], // 1: Regular, 2: Extended
