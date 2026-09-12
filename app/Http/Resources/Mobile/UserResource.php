@@ -22,13 +22,29 @@ class UserResource extends JsonResource
             $address = (array) $this->address;
         }
 
-        // 2. Safely parse social links (check social_links column first)
+        // 2. Safely parse social links (handles object/stdClass, array, JSON string, or raw column)
         $socialLinks = [];
-        $rawSocial = $this->social_links ?? $this->profile_social_links ?? null;
+        $rawSocial = $this->profile_social_links ?? $this->social_links ?? null;
+        if (empty($rawSocial) && method_exists($this->resource, 'getRawOriginal')) {
+            $rawSocial = $this->getRawOriginal('profile_social_links') ?? $this->getRawOriginal('social_links') ?? null;
+        }
+
         if (is_array($rawSocial)) {
             $socialLinks = $rawSocial;
+        } elseif (is_object($rawSocial)) {
+            $socialLinks = json_decode(json_encode($rawSocial), true) ?? (array) $rawSocial;
         } elseif (is_string($rawSocial)) {
             $socialLinks = json_decode($rawSocial, true) ?? [];
+        }
+
+        if (is_array($socialLinks)) {
+            if (isset($socialLinks['x']) && !isset($socialLinks['twitter'])) {
+                $socialLinks['twitter'] = $socialLinks['x'];
+            } elseif (isset($socialLinks['twitter']) && !isset($socialLinks['x'])) {
+                $socialLinks['x'] = $socialLinks['twitter'];
+            }
+        } else {
+            $socialLinks = [];
         }
 
         // 3. Safely format currency
@@ -91,7 +107,13 @@ class UserResource extends JsonResource
             'total_reviews'       => (int) $this->total_reviews,
             'avg_reviews'         => (float) $this->avg_reviews,
             'total_followers'     => (int) $this->total_followers,
-            'social_links'        => $socialLinks,
+            'social_links'         => (object) $socialLinks,
+            'profile_social_links' => (object) $socialLinks,
+            'spotify'              => $socialLinks['spotify'] ?? null,
+            'instagram'            => $socialLinks['instagram'] ?? null,
+            'twitter'              => $socialLinks['twitter'] ?? null,
+            'youtube'              => $socialLinks['youtube'] ?? null,
+            'soundcloud'           => $socialLinks['soundcloud'] ?? null,
             'created_at'          => $createdAt,
         ];
     }

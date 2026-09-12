@@ -45,7 +45,7 @@ class ProfileController extends Controller
             'lastname'            => ['required', 'string', 'max:50'],
             'profile_heading'     => ['nullable', 'string', 'max:100'],
             'profile_description' => ['nullable', 'string', 'max:1000'],
-            'social_links'        => ['nullable', 'array'],
+            'social_links'        => ['nullable'],
         ]);
 
         if ($validator->fails()) {
@@ -60,8 +60,29 @@ class ProfileController extends Controller
         $user->lastname = $request->lastname;
         $user->profile_heading = $request->profile_heading;
         $user->profile_description = $request->profile_description;
+
+        $socialLinks = null;
         if ($request->has('social_links')) {
-            $user->profile_social_links = $request->social_links;
+            $raw = $request->input('social_links');
+            if (is_string($raw)) {
+                $socialLinks = json_decode($raw, true) ?? [];
+            } elseif (is_array($raw)) {
+                $socialLinks = $raw;
+            } elseif (is_object($raw)) {
+                $socialLinks = (array) $raw;
+            }
+        }
+        foreach (['spotify', 'instagram', 'twitter', 'x', 'youtube', 'soundcloud', 'facebook'] as $platform) {
+            if ($request->filled($platform)) {
+                if (!is_array($socialLinks)) {
+                    $existing = $user->profile_social_links;
+                    $socialLinks = is_array($existing) ? $existing : (is_object($existing) ? (array) $existing : []);
+                }
+                $socialLinks[$platform] = $request->input($platform);
+            }
+        }
+        if ($socialLinks !== null) {
+            $user->profile_social_links = $socialLinks;
         }
 
         if ($request->filled('email')) {
