@@ -221,4 +221,95 @@ class CheckoutController extends Controller
             ], 500);
         }
     }
+    /**
+     * Process checkout payment via gateway (Flutterwave, PayPal, etc.)
+     */
+    public function process(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'transaction_id' => ['required', 'exists:transactions,id'],
+            'payment_method' => ['required', 'string'],
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'success' => false,
+                'message' => $validator->errors()->first(),
+            ], 422);
+        }
+
+        $user = $request->user();
+        if (!$user) {
+            return response()->json(['success' => false, 'message' => 'Unauthenticated.'], 401);
+        }
+
+        $transaction = Transaction::where('id', $request->transaction_id)
+            ->where('user_id', $user->id)
+            ->where('status', Transaction::STATUS_UNPAID)
+            ->first();
+
+        if (!$transaction) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Transaction not found or already processed.',
+            ], 404);
+        }
+
+        $alias = strtolower(trim($request->payment_method));
+        if ($alias === 'balance') {
+            return $this->payWithBalance($request);
+        }
+
+        $paymentGateway = PaymentGateway::where('alias', $alias)
+            ->where('status', 1)
+            ->first();
+
+        if (!$paymentGateway) {
+            $paymentGateway = PaymentGateway::where('alias', 'LIKE', $alias)->first();
+        }
+
+        if (!$paymentGateway) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Payment gateway "' . $alias . '" is currently not active.',
+            ], 400);
+        }
+
+        $transaction->payment_gateway_id = $paymentGateway->id;
+        $transaction->save();
+
+        $controllerName = ucfirst(Str::studly($paymentGateway->alias));
+        $class = "App\\Http\\Controllers\\Payments\\{$controllerName}Controller";
+
+        if (!class_exists($class)) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Payment gateway processor not supported.',
+            ], 500);
+        }
+
+        try {
+            $processor = new $class();
+            $response = json_decode($processor->process($transaction));
+
+            if ($response && isset($response->type) && $response->type === 'success' && isset($response->redirect_url)) {
+                return response()->json([
+                    'success'      => true,
+                    'payment_url'  => $response->redirect_url,
+                    'redirect_url' => $response->redirect_url,
+                ], 200);
+            }
+
+            $errorMsg = ($response && isset($response->msg)) ? $response->msg : 'Unable to initialize payment session.';
+            return response()->json([
+                'success' => false,
+                'message' => $errorMsg,
+            ], 400);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error initializing payment gateway: ' . $e->getMessage(),
+            ], 500);
+        }
+    }
 }

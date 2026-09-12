@@ -141,6 +141,7 @@ Route::namespace('Api\Mobile')->prefix('v1')->name('api.v1.')->group(function ()
             Route::get('gateways', 'CheckoutController@gateways')->name('gateways');
             Route::post('create-transaction', 'CheckoutController@createTransaction')->name('create-transaction');
             Route::post('pay-with-balance', 'CheckoutController@payWithBalance')->name('pay-with-balance');
+            Route::post('process', 'CheckoutController@process')->name('process');
         });
 
         // Author / Producer Studio
