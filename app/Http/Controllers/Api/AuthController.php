@@ -19,15 +19,21 @@ class AuthController extends Controller
      * @param  \Illuminate\Http\Request  $request
      * @return \Illuminate\Http\JsonResponse
      */
-    public function register(Request $request)
+        public function register(Request $request)
     {
         $validator = Validator::make($request->all(), [
-            'firstname'   => ['required', 'string', 'max:50'],
-            'lastname'    => ['required', 'string', 'max:50'],
-            'username'    => ['required', 'string', 'min:6', 'max:50', 'alpha_dash', 'unique:users,username'],
-            'email'       => ['required', 'string', 'email', 'max:100', 'unique:users,email'],
-            'password'    => ['required', 'string', 'min:8', 'confirmed'],
-            'device_name' => ['nullable', 'string', 'max:100'],
+            'firstname'             => ['required', 'string', 'max:50'],
+            'lastname'              => ['required', 'string', 'max:50'],
+            'username'              => ['required', 'string', 'min:3', 'max:50', 'unique:users,username'],
+            'email'                 => ['required', 'string', 'email', 'max:100', 'unique:users,email'],
+            'password'              => ['required', 'string', 'min:8', 'confirmed'],
+            'ref'                   => ['nullable', 'string', 'exists:users,username'],
+            'device_name'           => ['nullable', 'string', 'max:100'],
+        ], [
+            'email.unique'          => 'This email address is already registered.',
+            'username.unique'       => 'This username has already been taken.',
+            'password.confirmed'    => 'The password confirmation does not match.',
+            'ref.exists'            => 'The referral code/user does not exist.',
         ]);
 
         if ($validator->fails()) {
@@ -38,62 +44,36 @@ class AuthController extends Controller
             ], 422);
         }
 
-        $user = User::create([
-            'firstname' => $request->firstname,
-            'lastname'  => $request->lastname,
-            'username'  => strtolower($request->username),
-            'email'     => strtolower($request->email),
-            'password'  => Hash::make($request->password),
-        ]);
+        $referrer = null;
+        if ($request->filled('ref')) {
+            $referrer = User::where('username', $request->ref)->first();
+        }
 
-        try {
-            $user->addCountryBadge();
-        } catch (\Throwable $th) {}
+        $user = User::create([
+            'firstname'   => $request->firstname,
+            'lastname'    => $request->lastname,
+            'username'    => $request->username,
+            'email'       => strtolower(trim($request->email)),
+            'password'    => Hash::make($request->password),
+            'ref_by'      => $referrer ? $referrer->id : null,
+            'is_author'   => false,
+            'balance'     => 0,
+            'status'      => 1,
+        ]);
 
         try {
             $user->registerLoginLog();
         } catch (\Throwable $th) {}
-
-        try {
-            event(new Registered($user));
-        } catch (\Throwable $th) {}
-
-        try {
-            if (function_exists('adminNotify')) {
-                $title = translate(':username has registered', ['username' => $user->getName()]);
-                $image = $user->getAvatar();
-                $link = route('admin.members.users.edit', $user->id);
-                adminNotify($title, $image, $link);
-            }
-        } catch (\Throwable $th) {}
-
-        if (function_exists('isAddonActive') && isAddonActive('newsletter') && @settings('newsletter')->register_new_users) {
-            if (function_exists('registerForNewsletter')) {
-                try {
-                    registerForNewsletter($user->email);
-                } catch (\Throwable $th) {}
-            }
-        }
 
         $deviceName = $request->device_name ?? 'Mobile Device';
         $token = $user->createToken($deviceName)->plainTextToken;
 
         return response()->json([
             'success'      => true,
-            'message'      => 'Registration successful',
+            'message'      => 'Registration successful.',
             'access_token' => $token,
             'token_type'   => 'Bearer',
-            'user'         => [
-                'id'         => $user->id,
-                'firstname'  => $user->firstname,
-                'lastname'   => $user->lastname,
-                'username'   => $user->username,
-                'email'      => $user->email,
-                'avatar'     => $user->avatar ? asset($user->avatar) : null,
-                'is_author'  => (bool) $user->is_author,
-                'balance'    => $user->balance,
-                'created_at' => $user->created_at,
-            ],
+            'user'         => new UserResource($user),
         ], 201);
     }
 
