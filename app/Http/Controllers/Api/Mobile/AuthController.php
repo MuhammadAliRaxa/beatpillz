@@ -214,7 +214,19 @@ class AuthController extends Controller
         }
 
         $email = strtolower($request->email);
-        $user = User::where('email', $email)->first();
+        $provider = $request->provider;
+        $providerId = $request->provider_id;
+
+        $user = null;
+        if ($provider === 'facebook') {
+            $user = User::where('facebook_id', $providerId)->first();
+        } elseif ($provider === 'google') {
+            $user = User::where('google_id', $providerId)->first();
+        }
+
+        if (!$user) {
+            $user = User::where('email', $email)->first();
+        }
 
         if (!$user) {
             // Generate unique username from email
@@ -231,17 +243,28 @@ class AuthController extends Controller
             }
 
             $user = User::create([
-                'firstname' => $request->firstname ?: 'User',
-                'lastname'  => $request->lastname ?: '',
-                'username'  => $username,
-                'email'     => $email,
-                'password'  => Hash::make(Str::random(24)),
-                'avatar'    => $request->avatar,
+                'firstname'    => $request->firstname ?: 'User',
+                'lastname'     => $request->lastname ?: '',
+                'username'     => $username,
+                'email'        => $email,
+                'password'     => Hash::make(Str::random(24)),
+                'avatar'       => $request->avatar,
+                'facebook_id'  => $provider === 'facebook' ? $providerId : null,
+                'google_id'    => $provider === 'google' ? $providerId : null,
             ]);
 
             try {
                 $user->addCountryBadge();
             } catch (\Throwable $th) {}
+        } else {
+            // Link provider ID if not yet linked
+            if ($provider === 'facebook' && empty($user->facebook_id)) {
+                $user->facebook_id = $providerId;
+                $user->save();
+            } elseif ($provider === 'google' && empty($user->google_id)) {
+                $user->google_id = $providerId;
+                $user->save();
+            }
         }
 
         if ($user->isBanned()) {
