@@ -107,6 +107,8 @@ Route::namespace('Api\Mobile')->prefix('v1')->name('api.v1.')->group(function ()
             Route::put('profile', 'ProfileController@updateProfile')->name('profile.update');
             Route::put('account-details', 'ProfileController@updateAccountDetails')->name('account-details.update');
             Route::post('avatar', 'ProfileController@updateAvatar')->name('avatar.update');
+            Route::post('cover', 'ProfileController@updateCover')->name('cover.update');
+            Route::post('profile-cover', 'ProfileController@updateCover')->name('profile-cover.update');
             Route::put('password', 'ProfileController@changePassword')->name('password.update');
             Route::get('kyc', 'ProfileController@kycStatus')->name('kyc.status');
             Route::post('become-author', 'ProfileController@becomeAuthor')->name('become-author');

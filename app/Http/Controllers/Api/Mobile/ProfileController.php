@@ -33,7 +33,7 @@ class ProfileController extends Controller
     }
 
     /**
-     * Update user basic details and bio.
+     * Update user profile (text info, avatar, cover image, social links).
      */
     public function updateProfile(Request $request)
     {
@@ -41,11 +41,15 @@ class ProfileController extends Controller
         if (!$user) return response()->json(['success' => false, 'message' => 'Unauthenticated.'], 401);
 
         $validator = Validator::make($request->all(), [
-            'firstname'           => ['required', 'string', 'max:50'],
-            'lastname'            => ['required', 'string', 'max:50'],
-            'profile_heading'     => ['nullable', 'string', 'max:100'],
-            'profile_description' => ['nullable', 'string', 'max:1000'],
-            'social_links'        => ['nullable'],
+            'firstname'            => ['nullable', 'string', 'max:50'],
+            'lastname'             => ['nullable', 'string', 'max:50'],
+            'profile_heading'      => ['nullable', 'string', 'max:100'],
+            'profile_description'  => ['nullable', 'string', 'max:1000'],
+            'profile_contact_email' => ['nullable', 'email', 'max:255'],
+            'social_links'         => ['nullable'],
+            'avatar'               => ['nullable', 'image', 'mimes:jpeg,png,jpg,webp', 'max:4096'],
+            'profile_cover'        => ['nullable', 'image', 'mimes:jpeg,png,jpg,webp', 'max:6144'],
+            'cover'                => ['nullable', 'image', 'mimes:jpeg,png,jpg,webp', 'max:6144'],
         ]);
 
         if ($validator->fails()) {
@@ -56,10 +60,25 @@ class ProfileController extends Controller
             ], 422);
         }
 
-        $user->firstname = $request->firstname;
-        $user->lastname = $request->lastname;
-        $user->profile_heading = $request->profile_heading;
-        $user->profile_description = $request->profile_description;
+        if ($request->filled('firstname')) $user->firstname = $request->firstname;
+        if ($request->filled('lastname')) $user->lastname = $request->lastname;
+        if ($request->has('profile_heading')) $user->profile_heading = $request->profile_heading;
+        if ($request->has('profile_description')) $user->profile_description = $request->profile_description;
+        if ($request->has('profile_contact_email')) $user->profile_contact_email = $request->profile_contact_email;
+
+        $profilesPath = 'images/profiles/' . strtolower(hash_encode($user->id)) . '/';
+
+        // Avatar file upload
+        if ($request->hasFile('avatar')) {
+            $file = $request->file('avatar');
+            $user->avatar = imageUpload($file, $profilesPath, '120x120', null, $user->avatar);
+        }
+
+        // Cover file upload
+        if ($request->hasFile('profile_cover') || $request->hasFile('cover')) {
+            $coverFile = $request->file('profile_cover') ?? $request->file('cover');
+            $user->profile_cover = imageUpload($coverFile, $profilesPath, '1200x500', null, $user->profile_cover);
+        }
 
         $socialLinks = null;
         if ($request->has('social_links')) {
@@ -298,15 +317,8 @@ class ProfileController extends Controller
         if (!$user) return response()->json(['success' => false, 'message' => 'Unauthenticated.'], 401);
 
         if ($request->hasFile('avatar')) {
-            $file = $request->file('avatar');
-            $filename = 'avatar_' . $user->id . '_' . time() . '.' . $file->getClientOriginalExtension();
-            $path = $file->storeAs('images/avatars', $filename, 'public');
-
-            if ($user->avatar && file_exists(public_path($user->avatar))) {
-                @unlink(public_path($user->avatar));
-            }
-
-            $user->avatar = 'storage/' . $path;
+            $profilesPath = 'images/profiles/' . strtolower(hash_encode($user->id)) . '/';
+            $user->avatar = imageUpload($request->file('avatar'), $profilesPath, '120x120', null, $user->avatar);
             $user->save();
         }
 
@@ -315,6 +327,42 @@ class ProfileController extends Controller
             'message' => 'Avatar updated successfully.',
             'avatar'  => asset($user->avatar),
             'user'    => new UserResource($user),
+        ], 200);
+    }
+
+    /**
+     * Upload / Update profile cover image.
+     */
+    public function updateCover(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'cover'         => ['nullable', 'image', 'mimes:jpeg,png,jpg,webp', 'max:6144'],
+            'profile_cover' => ['nullable', 'image', 'mimes:jpeg,png,jpg,webp', 'max:6144'],
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'success' => false,
+                'message' => $validator->errors()->first(),
+                'errors'  => $validator->errors(),
+            ], 422);
+        }
+
+        $user = $request->user();
+        if (!$user) return response()->json(['success' => false, 'message' => 'Unauthenticated.'], 401);
+
+        $file = $request->file('cover') ?? $request->file('profile_cover');
+        if ($file) {
+            $profilesPath = 'images/profiles/' . strtolower(hash_encode($user->id)) . '/';
+            $user->profile_cover = imageUpload($file, $profilesPath, '1200x500', null, $user->profile_cover);
+            $user->save();
+        }
+
+        return response()->json([
+            'success'       => true,
+            'message'       => 'Profile cover image updated successfully.',
+            'profile_cover' => asset($user->profile_cover),
+            'user'          => new UserResource($user),
         ], 200);
     }
 
