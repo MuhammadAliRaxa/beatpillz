@@ -14,10 +14,14 @@ use App\Models\Sale;
 use App\Models\SubCategory;
 use App\Models\Withdrawal;
 use App\Models\WithdrawalMethod;
+use App\Methods\ImageToWebp;
+use App\Methods\Watermark;
 use Carbon\Carbon;
 use Cviebrock\EloquentSluggable\Services\SlugService;
 use Exception;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\File;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
 
@@ -385,20 +389,98 @@ class AuthorController extends Controller
         $storageProvider = storageProvider();
         $userHashId = strtolower(hash_encode($author->id));
         $storagePath = "files/items/{$userHashId}/";
-        $processor = ($storageProvider && class_exists($storageProvider->processor))
-            ? new $storageProvider->processor
-            : null;
 
-        $saveUploadedFile = function ($file, $fallbackFolder) use ($processor, $storagePath) {
-            if ($processor) {
+        $saveUploadedFile = function ($file, $fallbackFolder) use ($storageProvider, $storagePath, $itemSettings) {
+            if (!$file) {
+                return null;
+            }
+
+            $fileMimeType = $file->getMimeType();
+            $originalExt = strtolower($file->getClientOriginalExtension());
+            $tempDir = storage_path('app/temp/');
+            if (!File::isDirectory($tempDir)) {
+                File::makeDirectory($tempDir, 0755, true, true);
+            }
+
+            // Move uploaded file to local temp directory so PHP's upload handle doesn't lock/restrict access
+            $tempFileName = Str::random(15) . '_' . time() . '.' . ($originalExt ?: 'tmp');
+            $file->move($tempDir, $tempFileName);
+            $movedPath = $tempDir . $tempFileName;
+
+            // Reconstruct UploadedFile pointing to the moved local file
+            $fileToUpload = new \Illuminate\Http\UploadedFile(
+                $movedPath,
+                $tempFileName,
+                $fileMimeType,
+                null,
+                true
+            );
+
+            // If image and convert to webp is enabled (matching web UploadController!)
+            if (in_array($fileMimeType, ['image/png', 'image/jpg', 'image/jpeg'])) {
+                if (class_exists('\App\Methods\Watermark') && function_exists('isAddonActive') && isAddonActive('watermark') && @settings('watermark')->status) {
+                    try {
+                        $watermark = new \App\Methods\Watermark();
+                        $fileToUpload = $watermark->add($fileToUpload);
+                    } catch (\Throwable $e) {}
+                }
+
+                if (@$itemSettings->convert_images_webp && class_exists('\App\Methods\ImageToWebp')) {
+                    try {
+                        $image = new \App\Methods\ImageToWebp();
+                        $fileToUpload = $image->convert($fileToUpload);
+                    } catch (\Throwable $e) {}
+                }
+            }
+
+            $uploadedPath = null;
+
+            // 1. Try official storage provider processor (matches web UploadController)
+            if ($storageProvider && class_exists($storageProvider->processor)) {
                 try {
-                    $mimeType = $file->getMimeType();
-                    $response = $processor->upload($file, $storagePath, $mimeType);
-                    if (isset($response->type) && $response->type === 'success') {
-                        return $response->path;
+                    $processor = new $storageProvider->processor;
+                    $response = $processor->upload($fileToUpload, $storagePath, $fileToUpload->getMimeType());
+                    if (isset($response->type) && $response->type === 'success' && !empty($response->path)) {
+                        $uploadedPath = $response->path;
                     }
                 } catch (\Throwable $e) {}
             }
+
+            // 2. If processor failed but external storage provider is active, stream directly to the configured disk
+            if (!$uploadedPath && $storageProvider && !$storageProvider->isLocal()) {
+                try {
+                    $diskName = $storageProvider->alias;
+                    $ext = $fileToUpload->getClientOriginalExtension() ?: $originalExt;
+                    $filename = Str::random(15) . '_' . time() . '.' . strtolower($ext);
+                    $targetPath = $storagePath . $filename;
+                    $stream = @fopen($fileToUpload->getPathname(), 'r');
+                    if ($stream) {
+                        $put = Storage::disk($diskName)->put($targetPath, $stream);
+                        if (is_resource($stream)) {
+                            @fclose($stream);
+                        }
+                        if ($put) {
+                            $uploadedPath = $targetPath;
+                        }
+                    }
+                } catch (\Throwable $e) {}
+            }
+
+            // Clean up temporary local files
+            try {
+                if ($fileToUpload && file_exists($fileToUpload->getPathname())) {
+                    @unlink($fileToUpload->getPathname());
+                }
+                if (file_exists($movedPath)) {
+                    @unlink($movedPath);
+                }
+            } catch (\Throwable $e) {}
+
+            if ($uploadedPath) {
+                return $uploadedPath;
+            }
+
+            // 3. Fallback to local storage only if storage provider is local
             $stored = $file->store($fallbackFolder, 'public');
             return 'storage/' . $stored;
         };

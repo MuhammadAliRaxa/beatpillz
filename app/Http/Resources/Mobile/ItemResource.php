@@ -10,34 +10,25 @@ class ItemResource extends JsonResource
     {
         $hasDiscount = $this->hasDiscount() && $this->discount && $this->discount->isActive();
 
-        $previewAudio = null;
-        if ($this->preview_audio) {
-            $previewAudio = function_exists('getLinkFromStorageProvider') 
-                ? getLinkFromStorageProvider($this->preview_audio) 
-                : asset($this->preview_audio);
-        }
+        $resolveFileUrl = function ($path) {
+            if (!$path) {
+                return null;
+            }
+            if (\Illuminate\Support\Str::startsWith($path, ['http://', 'https://'])) {
+                return $path;
+            }
+            if (\Illuminate\Support\Str::startsWith($path, ['storage/', 'public/'])) {
+                return asset($path);
+            }
+            return function_exists('getLinkFromStorageProvider')
+                ? getLinkFromStorageProvider($path)
+                : asset($path);
+        };
 
-        $thumbnail = null;
-        if ($this->thumbnail || $this->preview_image) {
-            $thumbPath = $this->thumbnail ?: $this->preview_image;
-            $thumbnail = function_exists('getLinkFromStorageProvider')
-                ? getLinkFromStorageProvider($thumbPath)
-                : asset($thumbPath);
-        }
-
-        $previewImage = null;
-        if ($this->preview_image) {
-            $previewImage = function_exists('getLinkFromStorageProvider')
-                ? getLinkFromStorageProvider($this->preview_image)
-                : asset($this->preview_image);
-        }
-
-        $previewVideo = null;
-        if ($this->preview_video) {
-            $previewVideo = function_exists('getLinkFromStorageProvider')
-                ? getLinkFromStorageProvider($this->preview_video)
-                : asset($this->preview_video);
-        }
+        $previewAudio = $resolveFileUrl($this->preview_audio);
+        $thumbnail = $resolveFileUrl($this->thumbnail ?: $this->preview_image);
+        $previewImage = $resolveFileUrl($this->preview_image);
+        $previewVideo = $resolveFileUrl($this->preview_video);
 
         $isFavorited = false;
         if (auth('sanctum')->check()) {
