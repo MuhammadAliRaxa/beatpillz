@@ -2,15 +2,24 @@
 
 namespace App\Http\Controllers\Api\Mobile;
 
+use App\Events\ItemSubmitted;
 use App\Events\WithdrawalSubmitted;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\Mobile\ItemResource;
+use App\Jobs\SendFollowersNewItemNotification;
+use App\Models\Category;
 use App\Models\Item;
+use App\Models\ItemHistory;
 use App\Models\Sale;
+use App\Models\SubCategory;
 use App\Models\Withdrawal;
 use App\Models\WithdrawalMethod;
+use Carbon\Carbon;
+use Cviebrock\EloquentSluggable\Services\SlugService;
+use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Str;
 
 class AuthorController extends Controller
 {
@@ -246,10 +255,8 @@ class AuthorController extends Controller
     }
 
     /**
-     * Upload a new beat / item.
-     */
-    /**
      * Upload a new beat / item with full metadata, category attributes, files, and licensing.
+     * Matches the exact business logic and file processing of the Web Producer Studio.
      */
     public function uploadBeat(Request $request)
     {
@@ -268,14 +275,16 @@ class AuthorController extends Controller
             ], 403);
         }
 
-        $validator = Validator::make($request->all(), [
+        $itemSettings = settings('item');
+
+        $rules = [
             'name'                   => ['required', 'string', 'max:150'],
             'description'            => ['required', 'string'],
             'category_id'            => ['nullable'],
             'category'               => ['nullable', 'string'],
             'sub_category_id'        => ['nullable'],
             'sub_category'           => ['nullable', 'string'],
-            'version'                => ['nullable', 'string', 'max:50'],
+            'version'                => ['nullable', 'string', 'max:100'],
             'demo_link'              => ['nullable', 'string', 'max:255'],
             'tags'                   => ['nullable'],
             'regular_price'          => ['nullable', 'numeric'],
@@ -289,17 +298,17 @@ class AuthorController extends Controller
             'free_item'              => ['nullable'],
             'purchasing_status'      => ['nullable'],
             'main_file_source'       => ['nullable'],
-            'main_file'              => ['required_without:main_file_link'],
-            'main_file_link'         => ['required_without:main_file', 'nullable', 'url', 'max:500'],
+            'is_main_file_external'  => ['nullable'],
+            'main_file'              => ['nullable'],
+            'main_file_link'         => ['nullable', 'url', 'max:500'],
             'message'                => ['nullable', 'string', 'max:3000'],
             'thumbnail'              => ['nullable'],
             'preview_image'          => ['nullable'],
             'preview_video'          => ['nullable'],
             'preview_audio'          => ['nullable'],
-        ], [
-            'main_file.required_without'      => 'A main file (ZIP package containing WAV/stems/MP3) is required unless an external main file link is provided.',
-            'main_file_link.required_without' => 'An external main file link is required unless a main file is uploaded.',
-        ]);
+        ];
+
+        $validator = Validator::make($request->all(), $rules);
 
         if ($validator->fails()) {
             return response()->json([
@@ -309,97 +318,176 @@ class AuthorController extends Controller
             ], 422);
         }
 
-        // Resolve Category ID
-        $categoryId = $request->category_id;
-        if (!$categoryId && $request->filled('category')) {
-            $catSlugOrName = $request->category;
-            $cat = \App\Models\Category::where('slug', $catSlugOrName)
-                ->orWhere('name', $catSlugOrName)
-                ->orWhere('id', $catSlugOrName)
-                ->first();
-            $categoryId = $cat ? $cat->id : 21;
+        // 1. Resolve Category
+        $category = null;
+        if ($request->filled('category_id')) {
+            $category = Category::find($request->category_id);
         }
-        if (!$categoryId) {
-            $categoryId = 21; // Default to Afrobeats
+        if (!$category && $request->filled('category')) {
+            $catVal = $request->category;
+            $category = Category::where('slug', $catVal)
+                ->orWhere('name', $catVal)
+                ->orWhere('id', $catVal)
+                ->first();
+        }
+        if (!$category) {
+            $category = Category::first();
         }
 
-        // Resolve SubCategory ID
-        $subCategoryId = $request->sub_category_id;
-        if (!$subCategoryId && $request->filled('sub_category')) {
-            $subSlugOrName = $request->sub_category;
-            $subCat = \App\Models\SubCategory::where('slug', $subSlugOrName)
-                ->orWhere('name', $subSlugOrName)
-                ->orWhere('id', $subSlugOrName)
+        // 2. Resolve SubCategory
+        $subCategory = null;
+        if ($request->filled('sub_category_id')) {
+            $subCategory = SubCategory::find($request->sub_category_id);
+        }
+        if (!$subCategory && $request->filled('sub_category')) {
+            $subVal = $request->sub_category;
+            $subCategory = SubCategory::where('slug', $subVal)
+                ->orWhere('name', $subVal)
+                ->orWhere('id', $subVal)
                 ->first();
-            $subCategoryId = $subCat ? $subCat->id : null;
         }
 
-        // Pricing
+        // 3. Pricing & Minimums from Item Settings
         $regularPrice = $request->regular_license_price ?? $request->regular_price ?? 29.99;
         $extendedPrice = $request->extended_license_price ?? $request->extended_price ?? ($regularPrice * 2);
 
-        // Tags
+        $minPrice = @$itemSettings->minimum_price;
+        if ($minPrice && $regularPrice < $minPrice) {
+            $regularPrice = $minPrice;
+        }
+        if ($minPrice && $extendedPrice < $minPrice) {
+            $extendedPrice = $minPrice;
+        }
+
+        // 4. Tags
         $tags = $request->tags;
         if (is_array($tags)) {
             $tags = implode(', ', $tags);
         }
 
+        // 5. Support Configuration
+        $isSupported = (bool) ($request->support ?? $request->is_supported ?? false);
+        $supportInstructions = $isSupported ? $request->support_instructions : null;
+
+        // 6. Free Item & Purchasing Status
+        $free = Item::NOT_FREE;
+        $purchasing = Item::PURCHASING_STATUS_ENABLED;
+        $isFreeInput = (bool) ($request->free_item ?? $request->is_free ?? false);
+        if (@$itemSettings->free_item_option && $isFreeInput) {
+            $free = Item::FREE;
+            $purchasingStatusVal = $request->input('purchasing_status');
+            $purchasing = ($purchasingStatusVal === '0' || $purchasingStatusVal === 0 || $purchasingStatusVal === false)
+                ? Item::PURCHASING_STATUS_DISABLED
+                : Item::PURCHASING_STATUS_ENABLED;
+        }
+
+        // 7. File Storage Processor (Matches web UploadController & StorageProvider)
+        $storageProvider = storageProvider();
+        $userHashId = strtolower(hash_encode($author->id));
+        $storagePath = "files/items/{$userHashId}/";
+        $processor = ($storageProvider && class_exists($storageProvider->processor))
+            ? new $storageProvider->processor
+            : null;
+
+        $saveUploadedFile = function ($file, $fallbackFolder) use ($processor, $storagePath) {
+            if ($processor) {
+                try {
+                    $mimeType = $file->getMimeType();
+                    $response = $processor->upload($file, $storagePath, $mimeType);
+                    if (isset($response->type) && $response->type === 'success') {
+                        return $response->path;
+                    }
+                } catch (\Throwable $e) {}
+            }
+            $stored = $file->store($fallbackFolder, 'public');
+            return 'storage/' . $stored;
+        };
+
+        $thumbnailPath = null;
+        if ($request->hasFile('thumbnail')) {
+            $thumbnailPath = $saveUploadedFile($request->file('thumbnail'), 'thumbnails');
+        }
+
+        $previewImagePath = null;
+        if ($request->hasFile('preview_image')) {
+            $previewImagePath = $saveUploadedFile($request->file('preview_image'), 'previews/images');
+        }
+
+        $previewVideoPath = null;
+        if ($request->hasFile('preview_video')) {
+            $previewVideoPath = $saveUploadedFile($request->file('preview_video'), 'previews/video');
+        }
+
+        $previewAudioPath = null;
+        if ($request->hasFile('preview_audio')) {
+            $previewAudioPath = $saveUploadedFile($request->file('preview_audio'), 'previews/audio');
+        }
+
+        // Determine Main File (Direct File Upload vs External Link)
+        $isMainFileExternal = (int) ($request->main_file_source ?? $request->is_main_file_external ?? 0);
+        $mainFilePath = null;
+
+        if ($request->hasFile('main_file')) {
+            $mainFilePath = $saveUploadedFile($request->file('main_file'), 'items/main');
+            $isMainFileExternal = 0;
+        } elseif ($request->filled('main_file_link')) {
+            $mainFilePath = $request->main_file_link;
+            $isMainFileExternal = 1;
+        } elseif ($request->filled('main_file') && is_string($request->main_file) && (Str::startsWith($request->main_file, 'http://') || Str::startsWith($request->main_file, 'https://'))) {
+            $mainFilePath = $request->main_file;
+            $isMainFileExternal = 1;
+        }
+
+        if (!$mainFilePath) {
+            return response()->json([
+                'success' => false,
+                'message' => 'A main file (audio/stems package) or external download link is required.',
+                'errors'  => [
+                    'main_file' => ['A main file (audio/stems package) or external download link is required.'],
+                ],
+            ], 422);
+        }
+
+        // Determine Preview Type
+        $previewType = Item::PREVIEW_FILE_TYPE_AUDIO;
+        if ($previewVideoPath) {
+            $previewType = Item::PREVIEW_FILE_TYPE_VIDEO;
+        } elseif ($previewAudioPath) {
+            $previewType = Item::PREVIEW_FILE_TYPE_AUDIO;
+        } elseif ($previewImagePath) {
+            $previewType = Item::PREVIEW_FILE_TYPE_IMAGE;
+        }
+
+        // Review Status & History Title from System Settings
+        $status = @$itemSettings->adding_require_review ? Item::STATUS_PENDING : Item::STATUS_APPROVED;
+        $itemHistoryTitle = @$itemSettings->adding_require_review ? ItemHistory::TITLE_SUBMISSION : ItemHistory::TITLE_TRUST_SUBMISSION;
+
+        // Build and Save Item
         $item = new Item();
         $item->author_id = $author->id;
         $item->name = $request->name;
+        $item->slug = SlugService::createSlug(Item::class, 'slug', $request->name, ['unique' => false]);
         $item->description = $request->description;
-        $item->category_id = $categoryId;
-        $item->sub_category_id = $subCategoryId;
+        $item->category_id = $category ? $category->id : null;
+        $item->sub_category_id = $subCategory ? $subCategory->id : null;
         $item->version = $request->version ?? '1.0';
         $item->demo_link = $request->demo_link;
         $item->tags = $tags ?: 'beat';
         $item->regular_price = (float) $regularPrice;
         $item->extended_price = (float) $extendedPrice;
-        $item->is_supported = (bool) ($request->support ?? $request->is_supported ?? false);
-        $item->support_instructions = $item->is_supported ? $request->support_instructions : null;
-        $item->is_free = (bool) ($request->free_item ?? $request->is_free ?? false);
-        $item->purchasing_status = $request->filled('purchasing_status') ? (int) $request->purchasing_status : 1;
-        $item->status = Item::STATUS_PENDING; // Sent for reviewer approval
-        $item->preview_type = Item::PREVIEW_FILE_TYPE_AUDIO;
-
-        // Handle File Uploads if present
-        if ($request->hasFile('preview_audio')) {
-            $audioPath = $request->file('preview_audio')->store('previews/audio', 'public');
-            $item->preview_audio = 'storage/' . $audioPath;
-        }
-
-        if ($request->hasFile('preview_video')) {
-            $videoPath = $request->file('preview_video')->store('previews/video', 'public');
-            $item->preview_video = 'storage/' . $videoPath;
-            $item->preview_type = Item::PREVIEW_FILE_TYPE_VIDEO;
-        }
-
-        if ($request->hasFile('thumbnail')) {
-            $thumbPath = $request->file('thumbnail')->store('thumbnails', 'public');
-            $item->thumbnail = 'storage/' . $thumbPath;
-        }
-
-        if ($request->hasFile('preview_image')) {
-            $previewImagePath = $request->file('preview_image')->store('previews/images', 'public');
-            $item->preview_image = 'storage/' . $previewImagePath;
-        }
-
-        if ($request->hasFile('main_file')) {
-            $mainFilePath = $request->file('main_file')->store('items/main', 'public');
-            $item->main_file = 'storage/' . $mainFilePath;
-            $item->is_main_file_external = 0;
-        } elseif ($request->filled('main_file_link')) {
-            $item->main_file = $request->main_file_link;
-            $item->is_main_file_external = 1;
-        } else {
-            return response()->json([
-                'success' => false,
-                'message' => 'A main file (ZIP package) or external main file link is required.',
-                'errors'  => [
-                    'main_file' => ['A main file (ZIP package) or external main file link is required.'],
-                ],
-            ], 422);
-        }
+        $item->thumbnail = $thumbnailPath;
+        $item->preview_type = $previewType;
+        $item->preview_image = $previewImagePath;
+        $item->preview_video = $previewVideoPath;
+        $item->preview_audio = $previewAudioPath;
+        $item->main_file = $mainFilePath;
+        $item->is_main_file_external = $isMainFileExternal;
+        $item->is_supported = $isSupported ? 1 : 0;
+        $item->support_instructions = $supportInstructions;
+        $item->purchasing_status = $purchasing;
+        $item->status = $status;
+        $item->is_free = $free;
+        $item->price_updated_at = Carbon::now();
 
         try {
             $item->save();
@@ -410,21 +498,37 @@ class AuthorController extends Controller
             ], 500);
         }
 
-        // Create initial ItemHistory if model exists
-        if (class_exists('\\App\\Models\\ItemHistory')) {
+        // Create ItemHistory record
+        if (class_exists('\App\Models\ItemHistory')) {
             try {
-                $history = new \App\Models\ItemHistory();
+                $history = new ItemHistory();
                 $history->item_id = $item->id;
                 $history->author_id = $author->id;
-                $history->title = \App\Models\ItemHistory::TITLE_SUBMISSION ?? 'Submission';
+                $history->title = $itemHistoryTitle;
                 $history->body = $request->message ?? 'Submitted for review from Mobile Studio';
                 $history->save();
             } catch (\Throwable $th) {}
         }
 
+        // Dispatch ItemSubmitted event (matches web)
+        try {
+            event(new ItemSubmitted($item));
+        } catch (\Throwable $th) {}
+
+        // Notify followers if auto-approved
+        if (!@$itemSettings->adding_require_review && class_exists('\App\Jobs\SendFollowersNewItemNotification')) {
+            try {
+                dispatch(new SendFollowersNewItemNotification($item));
+            } catch (\Throwable $th) {}
+        }
+
+        $successMessage = @$itemSettings->adding_require_review
+            ? translate('Your item has been submitted successfully, we will review it as soon as possible.')
+            : translate('Your item has been added successfully.');
+
         return response()->json([
             'success' => true,
-            'message' => 'Beat uploaded successfully and submitted for review.',
+            'message' => $successMessage,
             'item'    => [
                 'id'            => $item->id,
                 'name'          => $item->name,
@@ -432,8 +536,13 @@ class AuthorController extends Controller
                 'status'        => $item->status,
                 'status_name'   => $item->getStatusName(),
                 'category_id'   => $item->category_id,
+                'category'      => $category ? $category->name : null,
                 'regular_price' => (float) $item->regular_price,
                 'extended_price'=> (float) $item->extended_price,
+                'thumbnail_url' => $item->getThumbnailLink(),
+                'is_free'       => (bool) $item->is_free,
+                'is_supported'  => (bool) $item->is_supported,
+                'created_at'    => $item->created_at ? $item->created_at->toIso8601String() : null,
             ],
         ], 201);
     }

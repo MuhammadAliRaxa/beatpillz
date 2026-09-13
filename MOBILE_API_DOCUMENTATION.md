@@ -516,19 +516,198 @@ Authorization: Bearer <access_token>
 ---
 
 ### `GET /producers/{username_or_id}`
-* **Auth**: Public (if token is passed, checks `is_following`)
-* **Description**: Public producer profile with beats catalog.
+* **Auth**: Public (Optional Bearer Token: if passed, populates `is_following` boolean)
+* **Description**: Returns public producer profile details, follow status, and summary counts.
 * **Response `200 OK`**:
 ```json
 {
   "success": true,
-  "producer": { ...UserResource },
-  "is_following": true,
-  "beats": [ ...ItemResource ],
+  "data": {
+    "profile": {
+      "id": 5,
+      "firstname": "Metro",
+      "lastname": "Boomin",
+      "fullname": "Metro Boomin",
+      "username": "metroboomin",
+      "email": "metro@example.com",
+      "avatar": "https://domain.com/storage/avatars/metro.jpg",
+      "profile_cover": "https://domain.com/storage/covers/metro-banner.jpg",
+      "profile_heading": "Platinum Multi-Genre Producer",
+      "profile_description": "Official BeatPillz store. Dark Trap, Drill, and R&B beats.",
+      "is_author": true,
+      "is_featured_author": true,
+      "exclusivity": "exclusive",
+      "address": {
+        "city": "Atlanta",
+        "state": "GA",
+        "country": "US",
+        "country_name": "United States"
+      },
+      "total_sales": 320,
+      "total_reviews": 48,
+      "avg_reviews": 4.9,
+      "total_followers": 1250,
+      "total_following": 42,
+      "profile_contact_email": "mgmt@metroboomin.com",
+      "social_links": {
+        "instagram": "https://instagram.com/metroboomin",
+        "twitter": "https://x.com/metroboomin",
+        "spotify": "https://open.spotify.com/artist/metro",
+        "youtube": "https://youtube.com/metroboomin"
+      },
+      "created_at": "2024-01-15T12:00:00.000000Z"
+    },
+    "is_following": true,
+    "counts": {
+      "portfolio": 36,
+      "followers": 1250,
+      "following": 42,
+      "reviews": 48,
+      "avg_rating": 4.9,
+      "total_sales": 320
+    }
+  }
+}
+```
+
+---
+
+### `GET /producers/{username_or_id}/portfolio`
+* **Auth**: Public
+* **Description**: Paginated beats uploaded by the producer, with search, genre/category filters, and sorting.
+* **Query Parameters**:
+  | Parameter | Type | Default | Description |
+  |---|---|---|---|
+  | `page` | `int` | `1` | Page number |
+  | `per_page` | `int` | `15` | Beats per page |
+  | `search` / `q` | `string` | `null` | Keyword search in beat title, tags, description |
+  | `category` | `string|int` | `null` | Filter by category slug or ID |
+  | `sort` | `string` | `latest` | `latest`, `popular`, `rating`, `price_low`, `price_high`, `oldest` |
+* **Response `200 OK`**:
+```json
+{
+  "success": true,
+  "data": [ ...ItemResource ],
+  "meta": {
+    "current_page": 1,
+    "last_page": 3,
+    "per_page": 15,
+    "total": 36
+  }
+}
+```
+
+---
+
+### `GET /producers/{username_or_id}/reviews`
+* **Auth**: Public
+* **Description**: Paginated reviews left by listeners for this producer's beats, plus a star rating breakdown (1 to 5 stars).
+* **Query Parameters**:
+  | Parameter | Type | Default | Description |
+  |---|---|---|---|
+  | `page` | `int` | `1` | Page number |
+  | `per_page` | `int` | `15` | Reviews per page |
+* **Response `200 OK`**:
+```json
+{
+  "success": true,
+  "stats": {
+    "total_reviews": 48,
+    "avg_rating": 4.9,
+    "rating_breakdown": {
+      "5": 44,
+      "4": 3,
+      "3": 1,
+      "2": 0,
+      "1": 0
+    }
+  },
+  "data": [ ...ReviewResource ],
   "meta": {
     "current_page": 1,
     "last_page": 4,
-    "total": 52
+    "per_page": 15,
+    "total": 48
+  }
+}
+```
+
+---
+
+### `GET /producers/{username_or_id}/followers`
+* **Auth**: Public (Optional Bearer Token: checks `is_following` per user)
+* **Description**: Paginated list of users following this producer.
+* **Query Parameters**:
+  | Parameter | Type | Default | Description |
+  |---|---|---|---|
+  | `page` | `int` | `1` | Page number |
+  | `per_page` | `int` | `15` | Followers per page |
+* **Response `200 OK`**:
+```json
+{
+  "success": true,
+  "total_followers": 1250,
+  "data": [
+    {
+      "id": 88,
+      "username": "listener_dave",
+      "firstname": "Dave",
+      "lastname": "Walker",
+      "fullname": "Dave Walker",
+      "avatar": "https://domain.com/storage/avatars/dave.jpg",
+      "profile_heading": "Artist / Songwriter",
+      "is_author": false,
+      "total_followers": 5,
+      "total_following": 18,
+      "is_following": false,
+      "followed_at": "2024-02-20T14:15:00.000000Z"
+    }
+  ],
+  "meta": {
+    "current_page": 1,
+    "last_page": 84,
+    "per_page": 15,
+    "total": 1250
+  }
+}
+```
+
+---
+
+### `GET /producers/{username_or_id}/following`
+* **Auth**: Public (Optional Bearer Token: checks `is_following` per user)
+* **Description**: Paginated list of producers/users followed by this producer.
+* **Query Parameters**:
+  | Parameter | Type | Default | Description |
+  |---|---|---|---|
+  | `page` | `int` | `1` | Page number |
+  | `per_page` | `int` | `15` | Following per page |
+* **Response `200 OK`**:
+```json
+{
+  "success": true,
+  "total_following": 42,
+  "data": [
+    {
+      "id": 12,
+      "username": "southside",
+      "firstname": "Southside",
+      "lastname": "808",
+      "fullname": "Southside 808",
+      "avatar": "https://domain.com/storage/avatars/southside.jpg",
+      "profile_heading": "808 Mafia Boss",
+      "is_author": true,
+      "total_followers": 2300,
+      "total_following": 85,
+      "is_following": true,
+      "followed_at": "2024-01-10T11:00:00.000000Z"
+    }
+  ],
+  "meta": {
+    "current_page": 1,
+    "last_page": 3,
+    "per_page": 15,
+    "total": 42
   }
 }
 ```
@@ -542,8 +721,28 @@ Authorization: Bearer <access_token>
 ```json
 {
   "success": true,
-  "is_following": true, // or false when unfollowing
-  "message": "Following producer." // or "Unfollowed producer."
+  "is_following": true,
+  "message": "Following producer."
+}
+```
+
+---
+
+### `POST /producers/{username_or_id}/contact`
+* **Auth**: Bearer Token Required
+* **Description**: Send inquiry / booking / collaboration message directly to the producer from a listener.
+* **Request Body**:
+```json
+{
+  "subject": "Exclusive beat inquiry",
+  "message": "Hi Metro, I'm interested in discussing exclusive rights for your Superhero Trap Beat."
+}
+```
+* **Response `200 OK`**:
+```json
+{
+  "success": true,
+  "message": "Your message has been sent to metroboomin."
 }
 ```
 

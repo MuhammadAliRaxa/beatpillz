@@ -76,8 +76,14 @@ Route::namespace('Api\Mobile')->prefix('v1')->name('api.v1.')->group(function ()
         Route::get('{id}/download-free', 'ItemController@downloadFree')->name('download-free');
     });
 
-    // Public Producer Profiles
-    Route::get('producers/{username_or_id}', 'ProducerController@show')->name('producers.show');
+    // Public Producer Profiles & Details
+    Route::prefix('producers')->name('producers.')->group(function () {
+        Route::get('{username_or_id}', 'ProducerController@show')->name('show');
+        Route::get('{username_or_id}/portfolio', 'ProducerController@portfolio')->name('portfolio');
+        Route::get('{username_or_id}/reviews', 'ProducerController@reviews')->name('reviews');
+        Route::get('{username_or_id}/followers', 'ProducerController@followers')->name('followers');
+        Route::get('{username_or_id}/following', 'ProducerController@followingList')->name('following.list');
+    });
 
     // Subscription & Premium Plans
     Route::get('plans', 'PlanController@index')->name('plans.index');
@@ -129,6 +135,7 @@ Route::namespace('Api\Mobile')->prefix('v1')->name('api.v1.')->group(function ()
         Route::post('items/{id}/reviews', 'ItemController@storeReview')->name('items.reviews.store');
         Route::post('items/{id}/comments', 'ItemController@storeComment')->name('items.comments.store');
         Route::post('producers/{id}/follow', 'ProducerController@toggleFollow')->name('producers.follow');
+        Route::post('producers/{username_or_id}/contact', 'ProducerController@contact')->name('producers.contact');
 
         // Cart
         Route::prefix('cart')->name('cart.')->group(function () {
