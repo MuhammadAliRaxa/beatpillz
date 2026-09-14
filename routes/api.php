@@ -127,6 +127,8 @@ Route::namespace('Api\Mobile')->prefix('v1')->name('api.v1.')->group(function ()
             Route::get('following', 'ProducerController@following')->name('following');
             Route::get('subscription', 'PlanController@userSubscription')->name('subscription');
             Route::get('referrals', 'ProfileController@referrals')->name('referrals');
+            Route::get('api-key', 'ProfileController@apiKey')->name('api-key');
+            Route::post('api-key/generate', 'ProfileController@apiKeyGenerate')->name('api-key.generate');
 
             // Library & Downloads
             Route::get('purchases', 'PurchaseController@index')->name('purchases');

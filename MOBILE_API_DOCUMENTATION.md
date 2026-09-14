@@ -637,6 +637,36 @@ Authorization: Bearer <access_token>
 
 ---
 
+### `GET /user/api-key`
+* **Auth**: Bearer Token Required
+* **Description**: Retrieves the user's developer API key and system API status (identical to web workspace `/workspace/settings/api-key`).
+* **Response `200 OK`**:
+```json
+{
+  "success": true,
+  "is_enabled": true,
+  "api_key": "3f4c6e9a7b12d5e8f0a3c2b1d4e6f8a0b2c4d6e8f0a2c4b6d8e0f2a4b6c8d0e2",
+  "docs_url": "https://api.beatpillz.com/api-docs"
+}
+```
+
+---
+
+### `POST /user/api-key/generate`
+* **Auth**: Bearer Token Required
+* **Description**: Generates or regenerates a new developer API key for the authenticated user (same sha256 generation logic as web).
+* **Response `200 OK`**:
+```json
+{
+  "success": true,
+  "message": "API key generated successfully.",
+  "api_key": "a1b2c3d4e5f60718293a4b5c6d7e8f90123456789abcdef0123456789abcdef0",
+  "docs_url": "https://api.beatpillz.com/api-docs"
+}
+```
+
+---
+
 ## 5. Home Discovery, Categories & Producers
 
 ### `GET /home`

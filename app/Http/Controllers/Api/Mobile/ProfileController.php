@@ -659,5 +659,51 @@ class ProfileController extends Controller
             'user'    => new UserResource($user),
         ], 200);
     }
+
+    /**
+     * Get user's developer API key and configuration.
+     */
+    public function apiKey(Request $request)
+    {
+        $user = $request->user();
+        if (!$user) return response()->json(['success' => false, 'message' => 'Unauthenticated.'], 401);
+
+        $apiEnabled = (bool) @settings('actions')->api;
+
+        return response()->json([
+            'success'    => true,
+            'is_enabled' => $apiEnabled,
+            'api_key'    => $user->api_key,
+            'docs_url'   => route('api.docs'),
+        ], 200);
+    }
+
+    /**
+     * Generate or regenerate user's developer API key (same logic as web).
+     */
+    public function apiKeyGenerate(Request $request)
+    {
+        $user = $request->user();
+        if (!$user) return response()->json(['success' => false, 'message' => 'Unauthenticated.'], 401);
+
+        if (!@settings('actions')->api) {
+            return response()->json([
+                'success' => false,
+                'message' => 'API feature is currently disabled by administrator.',
+            ], 403);
+        }
+
+        $apiKey = hash('sha256', hash_encode($user->id) . Str::random(16) . microtime());
+
+        $user->api_key = $apiKey;
+        $user->update();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'API key generated successfully.',
+            'api_key' => $apiKey,
+            'docs_url'=> route('api.docs'),
+        ], 200);
+    }
 }
 
