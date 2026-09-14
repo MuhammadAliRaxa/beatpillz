@@ -522,6 +522,82 @@ Authorization: Bearer <access_token>
 
 ---
 
+### `GET /user/badges`
+* **Auth**: Bearer Token Required
+* **Description**: Retrieves all badges earned by the authenticated user in custom display order (`sort_id` ASC), identical to web workspace settings (`/workspace/settings/badges`).
+* **Response `200 OK`**:
+```json
+{
+  "success": true,
+  "count": 3,
+  "badges": [
+    {
+      "id": 12,
+      "badge_id": 1,
+      "name": "Verified Account",
+      "alias": "verified_account",
+      "title": "Identity Verified",
+      "full_title": "Verified Account: Identity Verified",
+      "image": "https://api.beatpillz.com/images/badges/verified.png",
+      "country": null,
+      "sort_id": 1
+    },
+    {
+      "id": 15,
+      "badge_id": 5,
+      "name": "Level 1",
+      "alias": "author_level",
+      "title": "Beginner Producer",
+      "full_title": "Level 1: Beginner Producer",
+      "image": "https://api.beatpillz.com/images/badges/level1.png",
+      "country": null,
+      "sort_id": 2
+    },
+    {
+      "id": 18,
+      "badge_id": 9,
+      "name": "United States",
+      "alias": "country",
+      "title": null,
+      "full_title": "United States",
+      "image": "https://api.beatpillz.com/images/badges/us.png",
+      "country": "US",
+      "sort_id": 3
+    }
+  ]
+}
+```
+
+---
+
+### `POST /user/badges/sortable`
+* **Auth**: Bearer Token Required
+* **Description**: Reorders user's badges (identical to web workspace drag-and-drop sortable action).
+* **Payload**:
+```json
+{
+  "ids": [15, 12, 18]
+}
+```
+*(Also accepts comma-separated string: `{"ids": "15,12,18"}`)*
+* **Response `200 OK`**:
+```json
+{
+  "success": true,
+  "message": "Badges sorted successfully.",
+  "badges": [ ... ]
+}
+```
+
+---
+
+### `GET /producers/{username_or_id}/badges`
+* **Auth**: None (Public)
+* **Description**: Retrieves public badges earned by a specific producer/user.
+* **Response `200 OK`**: Same schema as `GET /user/badges`.
+
+---
+
 ### `POST /user/become-author`
 * **Auth**: Bearer Token Required
 * **Description**: Upgrades a listener account to an Author / Beatmaker account and assigns the default Level Badge.

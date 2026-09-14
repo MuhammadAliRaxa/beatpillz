@@ -83,6 +83,7 @@ Route::namespace('Api\Mobile')->prefix('v1')->name('api.v1.')->group(function ()
         Route::get('{username_or_id}/reviews', 'ProducerController@reviews')->name('reviews');
         Route::get('{username_or_id}/followers', 'ProducerController@followers')->name('followers');
         Route::get('{username_or_id}/following', 'ProducerController@followingList')->name('following.list');
+        Route::get('{username_or_id}/badges', 'BadgeController@userBadges')->name('badges');
     });
 
     // Subscription & Premium Plans
@@ -119,6 +120,8 @@ Route::namespace('Api\Mobile')->prefix('v1')->name('api.v1.')->group(function ()
             Route::get('kyc', 'ProfileController@kycStatus')->name('kyc.status');
             Route::post('kyc', 'ProfileController@submitKyc')->name('kyc.submit');
             Route::get('kyc/documents/{document}', 'ProfileController@kycDocument')->name('kyc.document');
+            Route::get('badges', 'BadgeController@index')->name('badges');
+            Route::post('badges/sortable', 'BadgeController@sortable')->name('badges.sortable');
             Route::post('become-author', 'ProfileController@becomeAuthor')->name('become-author');
             Route::put('withdrawal-account', 'ProfileController@updateWithdrawalAccount')->name('withdrawal-account');
             Route::get('following', 'ProducerController@following')->name('following');

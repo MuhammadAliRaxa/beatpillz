@@ -77,6 +77,11 @@ class ItemResource extends JsonResource
                 'username'  => $this->author->username,
                 'avatar'    => $this->author->avatar ? asset($this->author->avatar) : null,
                 'is_author' => (bool) $this->author->is_author,
+                'badges'    => BadgeResource::collection(
+                    $this->author->relationLoaded('badges')
+                        ? ($this->author->badges->first() && !$this->author->badges->first()->relationLoaded('badge') ? $this->author->badges->load('badge') : $this->author->badges)
+                        : $this->author->badges()->with('badge')->get()
+                ),
             ] : null,
             'tags'                => $this->tags ? explode(',', $this->tags) : [],
             'created_at'          => $this->created_at ? $this->created_at->toISOString() : null,

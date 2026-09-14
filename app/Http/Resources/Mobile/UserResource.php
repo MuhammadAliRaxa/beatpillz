@@ -116,6 +116,11 @@ class UserResource extends JsonResource
             'twitter'              => $socialLinks['twitter'] ?? null,
             'youtube'              => $socialLinks['youtube'] ?? null,
             'soundcloud'           => $socialLinks['soundcloud'] ?? null,
+            'badges'               => BadgeResource::collection(
+                $this->relationLoaded('badges')
+                    ? ($this->badges->first() && !$this->badges->first()->relationLoaded('badge') ? $this->badges->load('badge') : $this->badges)
+                    : $this->badges()->with('badge')->get()
+            ),
             'created_at'          => $createdAt,
         ];
     }

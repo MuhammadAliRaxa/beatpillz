@@ -521,6 +521,24 @@
 
     <div class="endpoint-card">
         <div class="endpoint-header">
+            <span class="badge badge-get">GET</span>
+            <span class="endpoint-path">/user/badges</span>
+            <span class="badge badge-auth">Token Required</span>
+        </div>
+        <p>Retrieves all badges earned by the authenticated user in custom sort order (<code>sort_id</code> ASC), identical to web workspace settings.</p>
+    </div>
+
+    <div class="endpoint-card">
+        <div class="endpoint-header">
+            <span class="badge badge-post">POST</span>
+            <span class="endpoint-path">/user/badges/sortable</span>
+            <span class="badge badge-auth">Token Required</span>
+        </div>
+        <p>Reorders user's badges (payload: <code>{"ids": [15, 12, 18]}</code> or comma-separated string).</p>
+    </div>
+
+    <div class="endpoint-card">
+        <div class="endpoint-header">
             <span class="badge badge-post">POST</span>
             <span class="endpoint-path">/user/become-author</span>
             <span class="badge badge-auth">Token Required</span>
