@@ -2,12 +2,14 @@
 
 namespace App\Http\Controllers\Api\Mobile;
 
+use App\Events\KycVerificationPending;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\Mobile\UserResource;
 use App\Models\KycVerification;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
 
@@ -367,25 +369,228 @@ class ProfileController extends Controller
     }
 
     /**
-     * Check KYC Status and requirements.
+     * Check KYC Status, requirements, sample guidance images, and latest submission.
      */
     public function kycStatus(Request $request)
     {
         $user = $request->user();
         if (!$user) return response()->json(['success' => false, 'message' => 'Unauthenticated.'], 401);
+
         $latestKyc = $user->kycVerifications()->latest()->first();
+
+        // Normalized KYC status: 0 = Unverified, 1 = Pending, 2 = Verified, 3 = Rejected
+        $kycStatus = 0;
+        if ($user->isKycVerified()) {
+            $kycStatus = 2;
+        } elseif ($latestKyc && $latestKyc->isPending()) {
+            $kycStatus = 1;
+        } elseif ($latestKyc && $latestKyc->isRejected()) {
+            $kycStatus = 3;
+        }
+
+        $kycSettings = @settings('kyc');
+
+        // Sample/guidance images from admin settings (stored in public/images/kyc/)
+        $sampleImages = [
+            'id_front_image' => (@$kycSettings && @$kycSettings->id_front_image) ? asset($kycSettings->id_front_image) : null,
+            'id_back_image'  => (@$kycSettings && @$kycSettings->id_back_image) ? asset($kycSettings->id_back_image) : null,
+            'passport_image' => (@$kycSettings && @$kycSettings->passport_image) ? asset($kycSettings->passport_image) : null,
+            'selfie_image'   => (@$kycSettings && @$kycSettings->selfie_image) ? asset($kycSettings->selfie_image) : null,
+        ];
+
+        $submissionData = null;
+        if ($latestKyc) {
+            $docs = [];
+            if ($latestKyc->documents) {
+                foreach ((array) $latestKyc->documents as $docKey => $docPath) {
+                    if ($docPath) {
+                        $docs[$docKey] = [
+                            'path' => $docPath,
+                            'url'  => route('api.v1.user.kyc.document', ['document' => $docKey]),
+                        ];
+                    }
+                }
+            }
+
+            $submissionData = [
+                'id'                 => $latestKyc->id,
+                'document_type'      => $latestKyc->document_type,
+                'document_type_name' => $latestKyc->getDocumentTypeOptions()[$latestKyc->document_type] ?? ucfirst(str_replace('_', ' ', $latestKyc->document_type)),
+                'document_number'    => $latestKyc->document_number,
+                'status'             => (int) $latestKyc->status,
+                'status_name'        => $latestKyc->getStatusName(),
+                'rejection_reason'   => $latestKyc->rejection_reason,
+                'documents'          => $docs,
+                'created_at'         => $latestKyc->created_at ? $latestKyc->created_at->toISOString() : null,
+                'updated_at'         => $latestKyc->updated_at ? $latestKyc->updated_at->toISOString() : null,
+            ];
+        }
+
+        return response()->json([
+            'success'     => true,
+            'kyc_status'  => $kycStatus,
+            'is_verified' => (bool) $user->isKycVerified(),
+            'is_pending'  => (bool) $user->isKycPending(),
+            'is_required' => (bool) $user->isKycRequired(),
+            'settings'    => [
+                'is_enabled'               => (bool) @$kycSettings->status,
+                'is_required'              => (bool) @$kycSettings->required,
+                'selfie_verification'      => (bool) @$kycSettings->selfie_verification,
+                'supported_document_types' => [
+                    KycVerification::DOCUMENT_TYPE_NATIONAL_ID => 'National ID',
+                    KycVerification::DOCUMENT_TYPE_PASSPORT    => 'Passport',
+                ],
+                'sample_images'            => $sampleImages,
+            ],
+            'submission'  => $submissionData,
+        ], 200);
+    }
+
+    /**
+     * Submit KYC verification documents (identical validation & storage to web).
+     */
+    public function submitKyc(Request $request)
+    {
+        $user = $request->user();
+        if (!$user) return response()->json(['success' => false, 'message' => 'Unauthenticated.'], 401);
+
+        if (!@settings('kyc')->status) {
+            return response()->json([
+                'success' => false,
+                'message' => 'KYC verification is currently disabled.',
+            ], 403);
+        }
+
+        if ($user->isKycVerified()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Your account is already KYC verified.',
+            ], 400);
+        }
+
+        if ($user->isKycPending()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Your KYC verification documents are currently pending review.',
+            ], 400);
+        }
+
+        $rules = [
+            'document_type' => ['required', 'string', 'in:national_id,passport'],
+        ];
+
+        if (@settings('kyc')->selfie_verification) {
+            $rules['selfie'] = ['required', 'image', 'mimes:jpeg,jpg,png', 'max:4096'];
+        }
+
+        if ($request->document_type == KycVerification::DOCUMENT_TYPE_NATIONAL_ID) {
+            $rules['front_of_id']        = ['required', 'image', 'mimes:jpeg,jpg,png', 'max:4096'];
+            $rules['back_of_id']         = ['required', 'image', 'mimes:jpeg,jpg,png', 'max:4096'];
+            $rules['national_id_number'] = ['required', 'string', 'block_patterns', 'max:30'];
+            $documentNumber              = $request->national_id_number;
+        } elseif ($request->document_type == KycVerification::DOCUMENT_TYPE_PASSPORT) {
+            $rules['passport']        = ['required', 'image', 'mimes:jpeg,jpg,png', 'max:4096'];
+            $rules['passport_number'] = ['required', 'string', 'block_patterns', 'max:30'];
+            $documentNumber           = $request->passport_number;
+        }
+
+        $validator = Validator::make($request->all(), $rules);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'success' => false,
+                'message' => $validator->errors()->first(),
+                'errors'  => $validator->errors(),
+            ], 422);
+        }
+
+        $documents = ['front_of_id' => null, 'back_of_id' => null, 'passport' => null, 'selfie' => null];
+        $hashId = strtolower(hash_encode($user->id));
+
+        if ($request->document_type == KycVerification::DOCUMENT_TYPE_NATIONAL_ID) {
+            $documents['front_of_id'] = storageFileUpload($request->file('front_of_id'), "kyc/docs/{$hashId}/", 'local');
+            $documents['back_of_id']  = storageFileUpload($request->file('back_of_id'), "kyc/docs/{$hashId}/", 'local');
+        } elseif ($request->document_type == KycVerification::DOCUMENT_TYPE_PASSPORT) {
+            $documents['passport']    = storageFileUpload($request->file('passport'), "kyc/docs/{$hashId}/", 'local');
+        }
+
+        if (@settings('kyc')->selfie_verification) {
+            $documents['selfie']      = storageFileUpload($request->file('selfie'), "kyc/docs/{$hashId}/", 'local');
+        }
+
+        $kycVerification = new KycVerification();
+        $kycVerification->user_id         = $user->id;
+        $kycVerification->document_type   = $request->document_type;
+        $kycVerification->document_number = $documentNumber;
+        $kycVerification->documents       = $documents;
+        $kycVerification->status          = KycVerification::STATUS_PENDING;
+        $kycVerification->save();
+
+        event(new KycVerificationPending($kycVerification));
+
+        $docs = [];
+        foreach ($documents as $docKey => $docPath) {
+            if ($docPath) {
+                $docs[$docKey] = [
+                    'path' => $docPath,
+                    'url'  => route('api.v1.user.kyc.document', ['document' => $docKey]),
+                ];
+            }
+        }
 
         return response()->json([
             'success'    => true,
-            'kyc_status' => (int) $user->kyc_status,
-            'is_verified'=> $user->kyc_status == User::KYC_STATUS_VERIFIED,
-            'submission' => $latestKyc ? [
-                'id'         => $latestKyc->id,
-                'status'     => (int) $latestKyc->status,
-                'created_at' => $latestKyc->created_at ? $latestKyc->created_at->toISOString() : null,
-                'updated_at' => $latestKyc->updated_at ? $latestKyc->updated_at->toISOString() : null,
-            ] : null,
-        ], 200);
+            'message'    => 'Your documents have been submitted successfully and are pending review.',
+            'kyc_status' => 1, // Pending
+            'submission' => [
+                'id'                 => $kycVerification->id,
+                'document_type'      => $kycVerification->document_type,
+                'document_type_name' => $kycVerification->getDocumentTypeOptions()[$kycVerification->document_type] ?? ucfirst(str_replace('_', ' ', $kycVerification->document_type)),
+                'document_number'    => $kycVerification->document_number,
+                'status'             => (int) $kycVerification->status,
+                'status_name'        => $kycVerification->getStatusName(),
+                'documents'          => $docs,
+                'created_at'         => $kycVerification->created_at ? $kycVerification->created_at->toISOString() : null,
+                'updated_at'         => $kycVerification->updated_at ? $kycVerification->updated_at->toISOString() : null,
+            ],
+        ], 201);
+    }
+
+    /**
+     * View/stream submitted KYC document securely for authenticated user.
+     */
+    public function kycDocument(Request $request, $document)
+    {
+        $user = $request->user();
+        if (!$user) return response()->json(['success' => false, 'message' => 'Unauthenticated.'], 401);
+
+        $allowedDocuments = ['front_of_id', 'back_of_id', 'passport', 'selfie'];
+        if (!in_array($document, $allowedDocuments)) {
+            return response()->json(['success' => false, 'message' => 'Invalid document type.'], 404);
+        }
+
+        $latestKyc = $user->kycVerifications()->latest()->first();
+        if (!$latestKyc || empty($latestKyc->documents)) {
+            return response()->json(['success' => false, 'message' => 'No KYC submissions found.'], 404);
+        }
+
+        $docs = (object) $latestKyc->documents;
+        if (!isset($docs->$document) || empty($docs->$document)) {
+            return response()->json(['success' => false, 'message' => 'Document not found.'], 404);
+        }
+
+        $filePath = $docs->$document;
+        if (!Storage::disk('local')->exists($filePath)) {
+            return response()->json(['success' => false, 'message' => 'File not found on storage.'], 404);
+        }
+
+        try {
+            $file = Storage::disk('local')->get($filePath);
+            $mimeType = Storage::disk('local')->mimeType($filePath);
+            return response($file, 200)->header('Content-Type', $mimeType);
+        } catch (\Exception $e) {
+            return response()->json(['success' => false, 'message' => 'Unable to read document file.'], 500);
+        }
     }
 
     /**

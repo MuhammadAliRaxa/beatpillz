@@ -498,7 +498,25 @@
             <span class="endpoint-path">/user/kyc</span>
             <span class="badge badge-auth">Token Required</span>
         </div>
-        <p>Returns KYC verification status (<code>is_verified: true|false</code>) and submission logs.</p>
+        <p>Returns KYC verification status (<code>0: Unverified</code>, <code>1: Pending</code>, <code>2: Verified</code>, <code>3: Rejected</code>), sample guidance images (via public URLs), and latest submission logs with secure document URLs.</p>
+    </div>
+
+    <div class="endpoint-card">
+        <div class="endpoint-header">
+            <span class="badge badge-post">POST</span>
+            <span class="endpoint-path">/user/kyc</span>
+            <span class="badge badge-auth">Token Required</span>
+        </div>
+        <p>Submit KYC verification documents (<code>multipart/form-data</code> with <code>document_type</code> [<code>national_id</code>|<code>passport</code>], ID numbers, front/back/passport images, and optional <code>selfie</code>). Files are stored securely on server disk.</p>
+    </div>
+
+    <div class="endpoint-card">
+        <div class="endpoint-header">
+            <span class="badge badge-get">GET</span>
+            <span class="endpoint-path">/user/kyc/documents/{document}</span>
+            <span class="badge badge-auth">Token Required</span>
+        </div>
+        <p>Securely stream/view a user's uploaded KYC document image (<code>front_of_id</code>, <code>back_of_id</code>, <code>passport</code>, <code>selfie</code>).</p>
     </div>
 
     <div class="endpoint-card">

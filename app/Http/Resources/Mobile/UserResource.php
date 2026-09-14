@@ -102,6 +102,7 @@ class UserResource extends JsonResource
             'balance'             => (float) $this->balance,
             'currency'            => $currency,
             'kyc_status'          => (int) $this->kyc_status,
+            'is_kyc_verified'     => (bool) $this->isKycVerified(),
             'total_sales'          => (int) $this->total_sales,
             'total_reviews'        => (int) $this->total_reviews,
             'avg_reviews'         => (float) $this->avg_reviews,

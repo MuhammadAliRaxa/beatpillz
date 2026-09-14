@@ -406,21 +406,119 @@ Authorization: Bearer <access_token>
 
 ### `GET /user/kyc`
 * **Auth**: Bearer Token Required
-* **Description**: Retrieves KYC verification status (`0: Unverified`, `1: Pending`, `2: Verified`, `3: Rejected`).
+* **Description**: Retrieves current KYC verification status (`0: Unverified`, `1: Pending`, `2: Verified`, `3: Rejected`), requirements & guidance sample images, and latest submission details.
+* **Image URL Handling**:
+  * **Sample/Guidance Images** (`settings.sample_images.*`): Hosted publicly on the server; URLs are generated via `asset()` and can be displayed directly in mobile apps without headers.
+  * **Uploaded Documents** (`submission.documents.*.url`): Government IDs are stored privately in server storage (`storage/app/kyc/docs/...`). Secure streaming URLs pointing to `/api/v1/user/kyc/documents/{document}` are provided; mobile apps must pass `Authorization: Bearer <token>` when requesting these files.
 * **Response `200 OK`**:
 ```json
 {
   "success": true,
-  "kyc_status": 2,
-  "is_verified": true,
+  "kyc_status": 1,
+  "is_verified": false,
+  "is_pending": true,
+  "is_required": false,
+  "settings": {
+    "is_enabled": true,
+    "is_required": false,
+    "selfie_verification": true,
+    "supported_document_types": {
+      "national_id": "National ID",
+      "passport": "Passport"
+    },
+    "sample_images": {
+      "id_front_image": "https://api.beatpillz.com/images/kyc/64e83f218a...png",
+      "id_back_image": "https://api.beatpillz.com/images/kyc/64e83f219b...png",
+      "passport_image": "https://api.beatpillz.com/images/kyc/64e83f21ac...png",
+      "selfie_image": "https://api.beatpillz.com/images/kyc/64e83f21bd...png"
+    }
+  },
   "submission": {
     "id": 1,
-    "status": 2,
+    "document_type": "national_id",
+    "document_type_name": "National ID",
+    "document_number": "12345-6789012-3",
+    "status": 1,
+    "status_name": "Pending",
+    "rejection_reason": null,
+    "documents": {
+      "front_of_id": {
+        "path": "kyc/docs/a1b2c3d4/front_1692800000.jpg",
+        "url": "https://api.beatpillz.com/api/v1/user/kyc/documents/front_of_id"
+      },
+      "back_of_id": {
+        "path": "kyc/docs/a1b2c3d4/back_1692800000.jpg",
+        "url": "https://api.beatpillz.com/api/v1/user/kyc/documents/back_of_id"
+      },
+      "selfie": {
+        "path": "kyc/docs/a1b2c3d4/selfie_1692800000.jpg",
+        "url": "https://api.beatpillz.com/api/v1/user/kyc/documents/selfie"
+      }
+    },
     "created_at": "2026-02-01T10:00:00.000000Z",
     "updated_at": "2026-02-02T14:30:00.000000Z"
   }
 }
 ```
+
+---
+
+### `POST /user/kyc`
+* **Auth**: Bearer Token Required
+* **Content-Type**: `multipart/form-data`
+* **Description**: Submit KYC verification documents and identification numbers (same validation and storage logic as web).
+* **Parameters**:
+  * `document_type` (*required*): string (`national_id` or `passport`)
+  * **When `document_type` is `national_id`**:
+    * `front_of_id` (*required*): image file (`jpeg, jpg, png`, max 4096 KB)
+    * `back_of_id` (*required*): image file (`jpeg, jpg, png`, max 4096 KB)
+    * `national_id_number` (*required*): string (max 30 chars)
+  * **When `document_type` is `passport`**:
+    * `passport` (*required*): image file (`jpeg, jpg, png`, max 4096 KB)
+    * `passport_number` (*required*): string (max 30 chars)
+  * **When Selfie Verification is enabled**:
+    * `selfie` (*required*): image file (`jpeg, jpg, png`, max 4096 KB)
+* **Response `201 Created`**:
+```json
+{
+  "success": true,
+  "message": "Your documents have been submitted successfully and are pending review.",
+  "kyc_status": 1,
+  "submission": {
+    "id": 2,
+    "document_type": "national_id",
+    "document_type_name": "National ID",
+    "document_number": "12345-6789012-3",
+    "status": 1,
+    "status_name": "Pending",
+    "documents": {
+      "front_of_id": {
+        "path": "kyc/docs/a1b2c3d4/front_1692800000.jpg",
+        "url": "https://api.beatpillz.com/api/v1/user/kyc/documents/front_of_id"
+      },
+      "back_of_id": {
+        "path": "kyc/docs/a1b2c3d4/back_1692800000.jpg",
+        "url": "https://api.beatpillz.com/api/v1/user/kyc/documents/back_of_id"
+      },
+      "selfie": {
+        "path": "kyc/docs/a1b2c3d4/selfie_1692800000.jpg",
+        "url": "https://api.beatpillz.com/api/v1/user/kyc/documents/selfie"
+      }
+    },
+    "created_at": "2026-09-14T10:50:00.000000Z",
+    "updated_at": "2026-09-14T10:50:00.000000Z"
+  }
+}
+```
+
+---
+
+### `GET /user/kyc/documents/{document}`
+* **Auth**: Bearer Token Required
+* **Description**: Securely stream and view a submitted KYC document file for the authenticated user (`front_of_id`, `back_of_id`, `passport`, `selfie`).
+* **Path Parameter**:
+  * `document`: `front_of_id` | `back_of_id` | `passport` | `selfie`
+* **Response `200 OK`**: Binary image stream with correct MIME type (e.g., `image/jpeg`, `image/png`).
 
 ---
 
