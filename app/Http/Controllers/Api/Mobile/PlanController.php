@@ -191,7 +191,6 @@ class PlanController extends Controller
                 $transaction->type = Transaction::TYPE_SUBSCRIPTION;
                 $transaction->plan_id = $plan->id;
                 $transaction->status = Transaction::STATUS_PAID;
-                $transaction->payment_gateway = 'balance';
                 $transaction->save();
 
                 $newSubscription = PremiumController::handleSubscription($user, $plan);

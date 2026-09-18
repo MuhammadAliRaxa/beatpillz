@@ -427,115 +427,117 @@ class CheckoutController extends Controller
             ], 422);
         }
 
-        $plan = Plan::where('id', $request->plan_id)->active()->firstOrFail();
-
-        // 1. Save / Update User Billing Address if provided
-        if ($request->filled('billing_address')) {
-            $addr = $request->input('billing_address');
-            if (!empty($addr['firstname'])) $user->firstname = $addr['firstname'];
-            if (!empty($addr['lastname'])) $user->lastname = $addr['lastname'];
-
-            $existingAddress = [];
-            if (is_array($user->address)) {
-                $existingAddress = $user->address;
-            } elseif (is_string($user->address)) {
-                $existingAddress = json_decode($user->address, true) ?? [];
-            } elseif (is_object($user->address)) {
-                $existingAddress = (array) $user->address;
-            }
-
-            $user->address = [
-                'line_1'  => $addr['address_line_1'] ?? $addr['line_1'] ?? ($existingAddress['line_1'] ?? ''),
-                'line_2'  => $addr['address_line_2'] ?? $addr['line_2'] ?? ($existingAddress['line_2'] ?? ''),
-                'city'    => $addr['city'] ?? ($existingAddress['city'] ?? ''),
-                'state'   => $addr['state'] ?? ($existingAddress['state'] ?? ''),
-                'zip'     => $addr['zip'] ?? $addr['postal_code'] ?? ($existingAddress['zip'] ?? ''),
-                'country' => $addr['country'] ?? ($existingAddress['country'] ?? ($user->country ?? 'Pakistan')),
-            ];
-            if (!empty($addr['country'])) {
-                $user->country = $addr['country'];
-            }
-            $user->save();
-        }
-
-        $subtotal = (float) $plan->price;
-        $paymentMethod = strtolower(trim($request->payment_method));
-
-        // 2. Pay with Account Balance
-        if ($paymentMethod === 'balance') {
-            if ($user->balance < $subtotal) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Insufficient wallet balance. Please choose another payment method.',
-                ], 400);
-            }
-
-            DB::beginTransaction();
-            try {
-                $user->decrement('balance', $subtotal);
-
-                $transaction = new Transaction();
-                $transaction->user_id = $user->id;
-                $transaction->amount = $subtotal;
-                $transaction->fees = 0;
-                $transaction->total = $subtotal;
-                $transaction->type = Transaction::TYPE_SUBSCRIPTION;
-                $transaction->plan_id = $plan->id;
-                $transaction->status = Transaction::STATUS_PAID;
-                $transaction->payment_gateway = 'balance';
-                $transaction->save();
-
-                $newSubscription = PremiumController::handleSubscription($user, $plan);
-
-                $statement = new Statement();
-                $statement->user_id = $user->id;
-                $statement->title = '[Subscription] #' . $newSubscription->id . ' - ' . $plan->name . ' (' . $plan->getIntervalName() . ')';
-                $statement->amount = $subtotal;
-                $statement->total = $subtotal;
-                $statement->type = Statement::TYPE_DEBIT;
-                $statement->save();
-
-                DB::commit();
-
-                return response()->json([
-                    'success'        => true,
-                    'is_paid'        => true,
-                    'message'        => 'Subscribed successfully using your wallet balance.',
-                    'user_balance'   => (float) $user->fresh()->balance,
-                    'subscription'   => [
-                        'id'         => $newSubscription->id,
-                        'plan_id'    => $plan->id,
-                        'plan_name'  => $plan->name,
-                        'expires_at' => $newSubscription->expiry_at ? $newSubscription->expiry_at->toISOString() : null,
-                    ],
-                    'order_summary'  => [
-                        'item_title'     => 'Subscription - ' . $plan->name . ' (' . $plan->getIntervalName() . ')',
-                        'subtotal'       => $subtotal,
-                        'fee_percentage' => 0.0,
-                        'fee_amount'     => 0.0,
-                        'total'          => $subtotal,
-                    ],
-                ], 200);
-            } catch (\Exception $e) {
-                DB::rollBack();
-                return response()->json([
-                    'success' => false,
-                    'message' => $e->getMessage(),
-                ], 500);
-            }
-        }
-
-        // 3. Pay via Gateway (Paystack, Flutterwave, Stripe, PayPal, etc.)
-        $gateway = PaymentGateway::where('alias', $paymentMethod)->where('status', 1)->first();
-        if (!$gateway) {
-            $gateway = PaymentGateway::where('alias', 'LIKE', $paymentMethod)->where('status', 1)->first();
-        }
-
-        $feePct = $gateway ? (float) $gateway->fees : 0.0;
-        $feeAmount = round(($subtotal * $feePct) / 100, 2);
-        $total = round($subtotal + $feeAmount, 2);
-
         try {
+            $plan = Plan::where('id', $request->plan_id)->active()->first();
+            if (!$plan) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'The selected subscription plan is inactive or not found.',
+                ], 404);
+            }
+
+            // 1. Save / Update User Billing Address if provided
+            if ($request->filled('billing_address')) {
+                $addr = $request->input('billing_address');
+                if (!empty($addr['firstname'])) $user->firstname = $addr['firstname'];
+                if (!empty($addr['lastname'])) $user->lastname = $addr['lastname'];
+
+                $existingAddress = [];
+                if (is_array($user->address)) {
+                    $existingAddress = $user->address;
+                } elseif (is_string($user->address)) {
+                    $existingAddress = json_decode($user->address, true) ?? [];
+                } elseif (is_object($user->address)) {
+                    $existingAddress = (array) $user->address;
+                }
+
+                $user->address = [
+                    'line_1'  => $addr['address_line_1'] ?? $addr['line_1'] ?? ($existingAddress['line_1'] ?? ''),
+                    'line_2'  => $addr['address_line_2'] ?? $addr['line_2'] ?? ($existingAddress['line_2'] ?? ''),
+                    'city'    => $addr['city'] ?? ($existingAddress['city'] ?? ''),
+                    'state'   => $addr['state'] ?? ($existingAddress['state'] ?? ''),
+                    'zip'     => $addr['zip'] ?? $addr['postal_code'] ?? ($existingAddress['zip'] ?? ''),
+                    'country' => $addr['country'] ?? ($existingAddress['country'] ?? 'PK'),
+                ];
+                $user->save();
+            }
+
+            $subtotal = (float) $plan->price;
+            $paymentMethod = strtolower(trim($request->payment_method));
+
+            // 2. Pay with Account Balance
+            if ($paymentMethod === 'balance') {
+                if ($user->balance < $subtotal) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'Insufficient wallet balance. Please choose another payment method.',
+                    ], 400);
+                }
+
+                DB::beginTransaction();
+                try {
+                    $user->decrement('balance', $subtotal);
+
+                    $transaction = new Transaction();
+                    $transaction->user_id = $user->id;
+                    $transaction->amount = $subtotal;
+                    $transaction->fees = 0;
+                    $transaction->total = $subtotal;
+                    $transaction->type = Transaction::TYPE_SUBSCRIPTION;
+                    $transaction->plan_id = $plan->id;
+                    $transaction->status = Transaction::STATUS_PAID;
+                    $transaction->save();
+
+                    $newSubscription = PremiumController::handleSubscription($user, $plan);
+
+                    $statement = new Statement();
+                    $statement->user_id = $user->id;
+                    $statement->title = '[Subscription] #' . $newSubscription->id . ' - ' . $plan->name . ' (' . $plan->getIntervalName() . ')';
+                    $statement->amount = $subtotal;
+                    $statement->total = $subtotal;
+                    $statement->type = Statement::TYPE_DEBIT;
+                    $statement->save();
+
+                    DB::commit();
+
+                    return response()->json([
+                        'success'        => true,
+                        'is_paid'        => true,
+                        'message'        => 'Subscribed successfully using your wallet balance.',
+                        'user_balance'   => (float) $user->fresh()->balance,
+                        'subscription'   => [
+                            'id'         => $newSubscription->id,
+                            'plan_id'    => $plan->id,
+                            'plan_name'  => $plan->name,
+                            'expires_at' => $newSubscription->expiry_at ? $newSubscription->expiry_at->toISOString() : null,
+                        ],
+                        'order_summary'  => [
+                            'item_title'     => 'Subscription - ' . $plan->name . ' (' . $plan->getIntervalName() . ')',
+                            'subtotal'       => $subtotal,
+                            'fee_percentage' => 0.0,
+                            'fee_amount'     => 0.0,
+                            'total'          => $subtotal,
+                        ],
+                    ], 200);
+                } catch (\Exception $e) {
+                    DB::rollBack();
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'Subscription processing failed: ' . $e->getMessage(),
+                    ], 500);
+                }
+            }
+
+            // 3. Pay via Gateway (Paystack, Flutterwave, Stripe, PayPal, etc.)
+            $gateway = PaymentGateway::where('alias', $paymentMethod)->where('status', 1)->first();
+            if (!$gateway) {
+                $gateway = PaymentGateway::where('alias', 'LIKE', $paymentMethod)->where('status', 1)->first();
+            }
+
+            $feePct = $gateway ? (float) $gateway->fees : 0.0;
+            $feeAmount = round(($subtotal * $feePct) / 100, 2);
+            $total = round($subtotal + $feeAmount, 2);
+
             $transaction = new Transaction();
             $transaction->user_id = $user->id;
             $transaction->amount = $subtotal;
@@ -549,11 +551,28 @@ class CheckoutController extends Controller
 
             $checkoutUrl = function_exists('hash_encode') ? route('checkout.index', hash_encode($transaction->id)) : url('/checkout/' . $transaction->id);
 
+            // Attempt to initialize direct gateway URL if supported
+            $paymentUrl = $checkoutUrl;
+            if ($gateway) {
+                $controllerName = ucfirst(Str::studly($gateway->alias));
+                $class = "App\\Http\\Controllers\\Payments\\{$controllerName}Controller";
+                if (class_exists($class)) {
+                    try {
+                        $processor = new $class();
+                        $procRes = json_decode($processor->process($transaction));
+                        if ($procRes && isset($procRes->type) && $procRes->type === 'success' && !empty($procRes->redirect_url)) {
+                            $paymentUrl = $procRes->redirect_url;
+                        }
+                    } catch (\Throwable $ignored) {}
+                }
+            }
+
             return response()->json([
                 'success'        => true,
                 'is_paid'        => false,
                 'transaction_id' => $transaction->id,
                 'payment_method' => $gateway ? $gateway->alias : $paymentMethod,
+                'payment_url'    => $paymentUrl,
                 'checkout_url'   => $checkoutUrl,
                 'order_summary'  => [
                     'item_title'     => 'Subscription - ' . $plan->name . ' (' . $plan->getIntervalName() . ')',
@@ -563,10 +582,11 @@ class CheckoutController extends Controller
                     'total'          => $total,
                 ],
             ], 200);
-        } catch (\Exception $e) {
+
+        } catch (\Throwable $e) {
             return response()->json([
                 'success' => false,
-                'message' => $e->getMessage(),
+                'message' => 'Checkout error: ' . $e->getMessage(),
             ], 500);
         }
     }
