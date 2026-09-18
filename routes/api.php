@@ -168,6 +168,8 @@ Route::namespace('Api\Mobile')->prefix('v1')->name('api.v1.')->group(function ()
         // Mobile Checkout & Payments
         Route::prefix('checkout')->name('checkout.')->group(function () {
             Route::get('gateways', 'CheckoutController@gateways')->name('gateways');
+            Route::get('subscription/{plan_id}', 'CheckoutController@subscriptionCheckoutInfo')->name('subscription.info');
+            Route::post('subscription', 'CheckoutController@subscriptionCheckout')->name('subscription.submit');
             Route::post('create-transaction', 'CheckoutController@createTransaction')->name('create-transaction');
             Route::post('pay-with-balance', 'CheckoutController@payWithBalance')->name('pay-with-balance');
             Route::post('process', 'CheckoutController@process')->name('process');

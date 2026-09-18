@@ -1370,21 +1370,137 @@ Authorization: Bearer <access_token>
   "gateways": [
     {
       "id": 1,
-      "name": "PayPal",
-      "alias": "paypal",
-      "logo": "https://beatpillz.com/storage/gateways/paypal.png",
-      "fees": 0.0,
+      "name": "Paystack",
+      "alias": "paystack",
+      "logo": "https://beatpillz.com/storage/gateways/paystack.png",
+      "fees": 3.0,
       "is_sandbox": false
     },
     {
       "id": 2,
-      "name": "Stripe",
-      "alias": "stripe",
-      "logo": "https://beatpillz.com/storage/gateways/stripe.png",
-      "fees": 0.0,
+      "name": "Flutterwave",
+      "alias": "flutterwave",
+      "logo": "https://beatpillz.com/storage/gateways/flutterwave.png",
+      "fees": 2.5,
       "is_sandbox": false
     }
   ]
+}
+```
+
+---
+
+### `GET /checkout/subscription/{plan_id}`
+* **Auth**: Bearer Token Required
+* **Description**: Returns all data required for the Native Subscription Checkout Screen (Plan details, user billing address, and gateways with pre-calculated fees and totals).
+* **Path Parameter**: `plan_id` (integer Plan ID)
+* **Response `200 OK`**:
+```json
+{
+  "success": true,
+  "plan": {
+    "id": 1,
+    "name": "Basic Creators",
+    "interval": "month",
+    "interval_name": "Monthly",
+    "price": 5.99,
+    "is_free": false
+  },
+  "user_balance": 25.50,
+  "billing_address": {
+    "firstname": "Ali",
+    "lastname": "Raxa",
+    "address_line_1": "streeet 1",
+    "address_line_2": "street 2",
+    "city": "Lahore",
+    "state": "Punjab",
+    "zip": "64000",
+    "country": "Pakistan"
+  },
+  "gateways": [
+    {
+      "id": 1,
+      "name": "Paystack",
+      "alias": "paystack",
+      "logo": "https://beatpillz.com/storage/gateways/paystack.png",
+      "fee_percentage": 3.0,
+      "fee_amount": 0.18,
+      "subtotal": 5.99,
+      "total": 6.17
+    },
+    {
+      "id": 2,
+      "name": "Flutterwave",
+      "alias": "flutterwave",
+      "logo": "https://beatpillz.com/storage/gateways/flutterwave.png",
+      "fee_percentage": 2.5,
+      "fee_amount": 0.15,
+      "subtotal": 5.99,
+      "total": 6.14
+    }
+  ]
+}
+```
+
+---
+
+### `POST /checkout/subscription`
+* **Auth**: Bearer Token Required
+* **Description**: Submit subscription checkout with billing address and selected payment method (instant wallet payment or gateway session).
+* **Payload**:
+```json
+{
+  "plan_id": 1,
+  "payment_method": "paystack",
+  "billing_address": {
+    "firstname": "Ali",
+    "lastname": "Raxa",
+    "address_line_1": "streeet 1",
+    "address_line_2": "street 2",
+    "city": "Lahore",
+    "state": "Punjab",
+    "zip": "64000",
+    "country": "Pakistan"
+  }
+}
+```
+* **Response `200 OK` (When Paying with Wallet Balance `payment_method: "balance"`)**:
+```json
+{
+  "success": true,
+  "is_paid": true,
+  "message": "Subscribed successfully using your wallet balance.",
+  "user_balance": 19.51,
+  "subscription": {
+    "id": 15,
+    "plan_id": 1,
+    "plan_name": "Basic Creators",
+    "expires_at": "2026-10-18T16:00:00.000000Z"
+  },
+  "order_summary": {
+    "item_title": "Subscription - Basic Creators (Monthly)",
+    "subtotal": 5.99,
+    "fee_percentage": 0.0,
+    "fee_amount": 0.0,
+    "total": 5.99
+  }
+}
+```
+* **Response `200 OK` (When Paying with Gateway e.g. `paystack` / `flutterwave`)**:
+```json
+{
+  "success": true,
+  "is_paid": false,
+  "transaction_id": 52,
+  "payment_method": "paystack",
+  "checkout_url": "https://beatpillz.com/checkout/a1b2c3d4",
+  "order_summary": {
+    "item_title": "Subscription - Basic Creators (Monthly)",
+    "subtotal": 5.99,
+    "fee_percentage": 3.0,
+    "fee_amount": 0.18,
+    "total": 6.17
+  }
 }
 ```
 

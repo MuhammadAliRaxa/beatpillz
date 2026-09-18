@@ -876,7 +876,25 @@
             <span class="endpoint-path">/checkout/gateways</span>
             <span class="badge badge-auth">Token Required</span>
         </div>
-        <p>Returns list of active payment gateways (Stripe, PayPal, Razorpay, etc.) and current user wallet balance.</p>
+        <p>Returns list of active payment gateways (Paystack, Flutterwave, Stripe, PayPal, etc.) and current user wallet balance.</p>
+    </div>
+
+    <div class="endpoint-card">
+        <div class="endpoint-header">
+            <span class="badge badge-get">GET</span>
+            <span class="endpoint-path">/checkout/subscription/{plan_id}</span>
+            <span class="badge badge-auth">Token Required</span>
+        </div>
+        <p>Returns complete Native Subscription Checkout screen data: Plan info, autofilled billing address, and gateways with calculated fee percentages, fee amounts, and totals.</p>
+    </div>
+
+    <div class="endpoint-card">
+        <div class="endpoint-header">
+            <span class="badge badge-post">POST</span>
+            <span class="endpoint-path">/checkout/subscription</span>
+            <span class="badge badge-auth">Token Required</span>
+        </div>
+        <p>Submit subscription checkout with updated billing address and chosen payment method (<code>balance</code> for instant 1-click in-app payment, or <code>paystack</code>/<code>flutterwave</code> for gateway checkout).</p>
     </div>
 
     <div class="endpoint-card">

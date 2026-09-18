@@ -3,9 +3,11 @@
 namespace App\Http\Controllers\Api\Mobile;
 
 use App\Http\Controllers\Controller;
+use App\Http\Controllers\PremiumController;
 use App\Models\CartItem;
 use App\Models\Item;
 use App\Models\PaymentGateway;
+use App\Models\Plan;
 use App\Models\Purchase;
 use App\Models\Sale;
 use App\Models\Statement;
@@ -309,6 +311,225 @@ class CheckoutController extends Controller
             return response()->json([
                 'success' => false,
                 'message' => 'Error initializing payment gateway: ' . $e->getMessage(),
+            ], 500);
+        }
+    }
+
+    /**
+     * Get checkout screen data for a subscription plan (Plan info, Billing address, Gateways with calculated fees).
+     */
+    public function subscriptionCheckoutInfo(Request $request, $plan_id)
+    {
+        $user = $request->user();
+        if (!$user) {
+            return response()->json(['success' => false, 'message' => 'Unauthenticated.'], 401);
+        }
+
+        $plan = Plan::where('id', $plan_id)->active()->first();
+        if (!$plan) {
+            return response()->json(['success' => false, 'message' => 'Subscription plan not found.'], 404);
+        }
+
+        $gateways = PaymentGateway::where('status', 1)->orderBy('sort_id', 'asc')->get();
+        $subtotal = (float) $plan->price;
+
+        return response()->json([
+            'success'         => true,
+            'plan'            => [
+                'id'            => $plan->id,
+                'name'          => $plan->name,
+                'interval'      => $plan->interval,
+                'interval_name' => $plan->getIntervalName(),
+                'price'         => (float) $plan->price,
+                'is_free'       => (bool) $plan->isFree(),
+            ],
+            'user_balance'    => (float) $user->balance,
+            'billing_address' => [
+                'firstname'      => $user->firstname,
+                'lastname'       => $user->lastname,
+                'address_line_1' => $user->address_line_1,
+                'address_line_2' => $user->address_line_2,
+                'city'           => $user->city,
+                'state'          => $user->state,
+                'zip'            => $user->zip,
+                'country'        => $user->country ?? 'Pakistan',
+            ],
+            'gateways'        => $gateways->map(function ($gw) use ($subtotal) {
+                $feePct = (float) $gw->fees;
+                $feeAmount = round(($subtotal * $feePct) / 100, 2);
+                $total = round($subtotal + $feeAmount, 2);
+
+                return [
+                    'id'             => $gw->id,
+                    'name'           => $gw->name,
+                    'alias'          => $gw->alias,
+                    'logo'           => $gw->logo ? asset($gw->logo) : null,
+                    'fee_percentage' => $feePct,
+                    'fee_amount'     => $feeAmount,
+                    'subtotal'       => $subtotal,
+                    'total'          => $total,
+                ];
+            }),
+        ], 200);
+    }
+
+    /**
+     * Submit subscription checkout with billing address and payment method.
+     */
+    public function subscriptionCheckout(Request $request)
+    {
+        $user = $request->user();
+        if (!$user) {
+            return response()->json(['success' => false, 'message' => 'Unauthenticated.'], 401);
+        }
+
+        $validator = Validator::make($request->all(), [
+            'plan_id'                        => ['required', 'exists:plans,id'],
+            'payment_method'                 => ['required', 'string'],
+            'billing_address'                => ['nullable', 'array'],
+            'billing_address.firstname'      => ['nullable', 'string', 'max:50'],
+            'billing_address.lastname'       => ['nullable', 'string', 'max:50'],
+            'billing_address.address_line_1' => ['nullable', 'string', 'max:255'],
+            'billing_address.address_line_2' => ['nullable', 'string', 'max:255'],
+            'billing_address.city'           => ['nullable', 'string', 'max:100'],
+            'billing_address.state'          => ['nullable', 'string', 'max:100'],
+            'billing_address.zip'            => ['nullable', 'string', 'max:50'],
+            'billing_address.country'        => ['nullable', 'string', 'max:100'],
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'success' => false,
+                'message' => $validator->errors()->first(),
+                'errors'  => $validator->errors(),
+            ], 422);
+        }
+
+        $plan = Plan::where('id', $request->plan_id)->active()->firstOrFail();
+
+        // 1. Save / Update User Billing Address if provided
+        if ($request->filled('billing_address')) {
+            $addr = $request->input('billing_address');
+            if (!empty($addr['firstname'])) $user->firstname = $addr['firstname'];
+            if (!empty($addr['lastname'])) $user->lastname = $addr['lastname'];
+            if (isset($addr['address_line_1'])) $user->address_line_1 = $addr['address_line_1'];
+            if (isset($addr['address_line_2'])) $user->address_line_2 = $addr['address_line_2'];
+            if (isset($addr['city'])) $user->city = $addr['city'];
+            if (isset($addr['state'])) $user->state = $addr['state'];
+            if (isset($addr['zip'])) $user->zip = $addr['zip'];
+            if (!empty($addr['country'])) $user->country = $addr['country'];
+            $user->save();
+        }
+
+        $subtotal = (float) $plan->price;
+        $paymentMethod = strtolower(trim($request->payment_method));
+
+        // 2. Pay with Account Balance
+        if ($paymentMethod === 'balance') {
+            if ($user->balance < $subtotal) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Insufficient wallet balance. Please choose another payment method.',
+                ], 400);
+            }
+
+            DB::beginTransaction();
+            try {
+                $user->decrement('balance', $subtotal);
+
+                $transaction = new Transaction();
+                $transaction->user_id = $user->id;
+                $transaction->amount = $subtotal;
+                $transaction->fees = 0;
+                $transaction->total = $subtotal;
+                $transaction->type = Transaction::TYPE_SUBSCRIPTION;
+                $transaction->plan_id = $plan->id;
+                $transaction->status = Transaction::STATUS_PAID;
+                $transaction->payment_gateway = 'balance';
+                $transaction->save();
+
+                $newSubscription = PremiumController::handleSubscription($user, $plan);
+
+                $statement = new Statement();
+                $statement->user_id = $user->id;
+                $statement->title = '[Subscription] #' . $newSubscription->id . ' - ' . $plan->name . ' (' . $plan->getIntervalName() . ')';
+                $statement->amount = $subtotal;
+                $statement->total = $subtotal;
+                $statement->type = Statement::TYPE_DEBIT;
+                $statement->save();
+
+                DB::commit();
+
+                return response()->json([
+                    'success'        => true,
+                    'is_paid'        => true,
+                    'message'        => 'Subscribed successfully using your wallet balance.',
+                    'user_balance'   => (float) $user->fresh()->balance,
+                    'subscription'   => [
+                        'id'         => $newSubscription->id,
+                        'plan_id'    => $plan->id,
+                        'plan_name'  => $plan->name,
+                        'expires_at' => $newSubscription->expiry_at ? $newSubscription->expiry_at->toISOString() : null,
+                    ],
+                    'order_summary'  => [
+                        'item_title'     => 'Subscription - ' . $plan->name . ' (' . $plan->getIntervalName() . ')',
+                        'subtotal'       => $subtotal,
+                        'fee_percentage' => 0.0,
+                        'fee_amount'     => 0.0,
+                        'total'          => $subtotal,
+                    ],
+                ], 200);
+            } catch (\Exception $e) {
+                DB::rollBack();
+                return response()->json([
+                    'success' => false,
+                    'message' => $e->getMessage(),
+                ], 500);
+            }
+        }
+
+        // 3. Pay via Gateway (Paystack, Flutterwave, Stripe, PayPal, etc.)
+        $gateway = PaymentGateway::where('alias', $paymentMethod)->where('status', 1)->first();
+        if (!$gateway) {
+            $gateway = PaymentGateway::where('alias', 'LIKE', $paymentMethod)->where('status', 1)->first();
+        }
+
+        $feePct = $gateway ? (float) $gateway->fees : 0.0;
+        $feeAmount = round(($subtotal * $feePct) / 100, 2);
+        $total = round($subtotal + $feeAmount, 2);
+
+        try {
+            $transaction = new Transaction();
+            $transaction->user_id = $user->id;
+            $transaction->amount = $subtotal;
+            $transaction->fees = $feeAmount;
+            $transaction->total = $total;
+            $transaction->type = Transaction::TYPE_SUBSCRIPTION;
+            $transaction->plan_id = $plan->id;
+            $transaction->payment_gateway_id = $gateway ? $gateway->id : null;
+            $transaction->status = Transaction::STATUS_UNPAID;
+            $transaction->save();
+
+            $checkoutUrl = function_exists('hash_encode') ? route('checkout.index', hash_encode($transaction->id)) : url('/checkout/' . $transaction->id);
+
+            return response()->json([
+                'success'        => true,
+                'is_paid'        => false,
+                'transaction_id' => $transaction->id,
+                'payment_method' => $gateway ? $gateway->alias : $paymentMethod,
+                'checkout_url'   => $checkoutUrl,
+                'order_summary'  => [
+                    'item_title'     => 'Subscription - ' . $plan->name . ' (' . $plan->getIntervalName() . ')',
+                    'subtotal'       => $subtotal,
+                    'fee_percentage' => $feePct,
+                    'fee_amount'     => $feeAmount,
+                    'total'          => $total,
+                ],
+            ], 200);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage(),
             ], 500);
         }
     }
