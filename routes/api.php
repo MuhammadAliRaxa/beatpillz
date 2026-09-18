@@ -130,7 +130,7 @@ Route::namespace('Api\Mobile')->prefix('v1')->name('api.v1.')->group(function ()
             Route::put('withdrawal-account', 'ProfileController@updateWithdrawalAccount')->name('withdrawal-account');
             Route::get('following', 'ProducerController@following')->name('following');
             Route::get('subscription', 'PlanController@userSubscription')->name('subscription');
-            Route::post('plans/{id}/subscribe', 'PlanController@subscribe')->name('plans.subscribe');
+            Route::post('plans/{id}/subscribe', 'PlanController@subscribe')->name('user.plans.subscribe');
             Route::get('referrals', 'ProfileController@referrals')->name('referrals');
             Route::get('api-key', 'ProfileController@apiKey')->name('api-key');
             Route::post('api-key/generate', 'ProfileController@apiKeyGenerate')->name('api-key.generate');
@@ -141,6 +141,9 @@ Route::namespace('Api\Mobile')->prefix('v1')->name('api.v1.')->group(function ()
             Route::get('purchases/{id}/license', 'PurchaseController@license')->name('purchases.license');
             Route::get('statements', 'PurchaseController@statements')->name('statements');
         });
+
+        // Plans & Subscriptions Direct Route
+        Route::post('plans/{id}/subscribe', 'PlanController@subscribe')->name('plans.subscribe');
 
         // Tools & Utilities
         Route::post('tools/verify-license', 'PurchaseController@verifyLicense')->name('tools.verify-license');
