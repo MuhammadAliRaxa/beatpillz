@@ -333,6 +333,22 @@ class CheckoutController extends Controller
         $gateways = PaymentGateway::where('status', 1)->orderBy('sort_id', 'asc')->get();
         $subtotal = (float) $plan->price;
 
+        $address = [];
+        if (is_array($user->address)) {
+            $address = $user->address;
+        } elseif (is_string($user->address)) {
+            $address = json_decode($user->address, true) ?? [];
+        } elseif (is_object($user->address)) {
+            $address = (array) $user->address;
+        }
+
+        $addressLine1 = $address['line_1'] ?? $address['address_1'] ?? $address['address_line_1'] ?? ($user->address_line_1 ?? '');
+        $addressLine2 = $address['line_2'] ?? $address['address_2'] ?? $address['address_line_2'] ?? ($user->address_line_2 ?? '');
+        $city = $address['city'] ?? ($user->city ?? '');
+        $state = $address['state'] ?? ($user->state ?? '');
+        $zip = $address['zip'] ?? $address['postal_code'] ?? ($user->zip ?? '');
+        $country = $address['country'] ?? ($user->country ?? 'Pakistan');
+
         return response()->json([
             'success'         => true,
             'plan'            => [
@@ -345,14 +361,17 @@ class CheckoutController extends Controller
             ],
             'user_balance'    => (float) $user->balance,
             'billing_address' => [
-                'firstname'      => $user->firstname,
-                'lastname'       => $user->lastname,
-                'address_line_1' => $user->address_line_1,
-                'address_line_2' => $user->address_line_2,
-                'city'           => $user->city,
-                'state'          => $user->state,
-                'zip'            => $user->zip,
-                'country'        => $user->country ?? 'Pakistan',
+                'firstname'      => $user->firstname ?? '',
+                'lastname'       => $user->lastname ?? '',
+                'address_line_1' => $addressLine1,
+                'address_line_2' => $addressLine2,
+                'line_1'         => $addressLine1,
+                'line_2'         => $addressLine2,
+                'city'           => $city,
+                'state'          => $state,
+                'zip'            => $zip,
+                'postal_code'    => $zip,
+                'country'        => $country,
             ],
             'gateways'        => $gateways->map(function ($gw) use ($subtotal) {
                 $feePct = (float) $gw->fees;
@@ -390,10 +409,13 @@ class CheckoutController extends Controller
             'billing_address.firstname'      => ['nullable', 'string', 'max:50'],
             'billing_address.lastname'       => ['nullable', 'string', 'max:50'],
             'billing_address.address_line_1' => ['nullable', 'string', 'max:255'],
+            'billing_address.line_1'         => ['nullable', 'string', 'max:255'],
             'billing_address.address_line_2' => ['nullable', 'string', 'max:255'],
+            'billing_address.line_2'         => ['nullable', 'string', 'max:255'],
             'billing_address.city'           => ['nullable', 'string', 'max:100'],
             'billing_address.state'          => ['nullable', 'string', 'max:100'],
             'billing_address.zip'            => ['nullable', 'string', 'max:50'],
+            'billing_address.postal_code'    => ['nullable', 'string', 'max:50'],
             'billing_address.country'        => ['nullable', 'string', 'max:100'],
         ]);
 
@@ -412,12 +434,27 @@ class CheckoutController extends Controller
             $addr = $request->input('billing_address');
             if (!empty($addr['firstname'])) $user->firstname = $addr['firstname'];
             if (!empty($addr['lastname'])) $user->lastname = $addr['lastname'];
-            if (isset($addr['address_line_1'])) $user->address_line_1 = $addr['address_line_1'];
-            if (isset($addr['address_line_2'])) $user->address_line_2 = $addr['address_line_2'];
-            if (isset($addr['city'])) $user->city = $addr['city'];
-            if (isset($addr['state'])) $user->state = $addr['state'];
-            if (isset($addr['zip'])) $user->zip = $addr['zip'];
-            if (!empty($addr['country'])) $user->country = $addr['country'];
+
+            $existingAddress = [];
+            if (is_array($user->address)) {
+                $existingAddress = $user->address;
+            } elseif (is_string($user->address)) {
+                $existingAddress = json_decode($user->address, true) ?? [];
+            } elseif (is_object($user->address)) {
+                $existingAddress = (array) $user->address;
+            }
+
+            $user->address = [
+                'line_1'  => $addr['address_line_1'] ?? $addr['line_1'] ?? ($existingAddress['line_1'] ?? ''),
+                'line_2'  => $addr['address_line_2'] ?? $addr['line_2'] ?? ($existingAddress['line_2'] ?? ''),
+                'city'    => $addr['city'] ?? ($existingAddress['city'] ?? ''),
+                'state'   => $addr['state'] ?? ($existingAddress['state'] ?? ''),
+                'zip'     => $addr['zip'] ?? $addr['postal_code'] ?? ($existingAddress['zip'] ?? ''),
+                'country' => $addr['country'] ?? ($existingAddress['country'] ?? ($user->country ?? 'Pakistan')),
+            ];
+            if (!empty($addr['country'])) {
+                $user->country = $addr['country'];
+            }
             $user->save();
         }
 
