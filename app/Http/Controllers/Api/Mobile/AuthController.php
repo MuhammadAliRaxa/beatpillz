@@ -6,6 +6,7 @@ use App\Events\Registered;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\Mobile\UserResource;
 use App\Models\User;
+use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Password;
@@ -123,6 +124,21 @@ class AuthController extends Controller
             ], 403);
         }
 
+        // Check if 2FA Authentication is enabled
+        if ($user->google2fa_status) {
+            $twoFactorToken = encrypt([
+                'user_id'    => $user->id,
+                'expires_at' => now()->addMinutes(10)->timestamp,
+            ]);
+
+            return response()->json([
+                'success'          => true,
+                'requires_2fa'     => true,
+                'two_factor_token' => $twoFactorToken,
+                'message'          => '2FA authentication code required.',
+            ], 200);
+        }
+
         try {
             $user->registerLoginLog();
         } catch (\Throwable $th) {}
@@ -137,6 +153,85 @@ class AuthController extends Controller
             'token_type'   => 'Bearer',
             'user'         => new UserResource($user),
         ], 200);
+    }
+
+    /**
+     * Verify 2FA OTP code and complete login authentication.
+     */
+    public function verify2fa(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'two_factor_token' => ['required', 'string'],
+            'otp_code'         => ['required', 'numeric'],
+            'device_name'      => ['nullable', 'string', 'max:100'],
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'success' => false,
+                'message' => $validator->errors()->first(),
+                'errors'  => $validator->errors(),
+            ], 422);
+        }
+
+        try {
+            $payload = decrypt($request->input('two_factor_token'));
+            if (!is_array($payload) || !isset($payload['user_id']) || !isset($payload['expires_at'])) {
+                throw new Exception('Invalid two factor session token.');
+            }
+
+            if (now()->timestamp > $payload['expires_at']) {
+                return response()->json([
+                    'success' => false,
+                    'message' => '2FA session expired. Please log in again.',
+                ], 401);
+            }
+
+            $user = User::find($payload['user_id']);
+            if (!$user) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'User account not found.',
+                ], 404);
+            }
+
+            if ($user->isBanned()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Your account is blocked. Please contact support.',
+                ], 403);
+            }
+
+            $google2fa = app('pragmarx.google2fa');
+            $valid = $google2fa->verifyKey($user->google2fa_secret, $request->otp_code);
+
+            if (!$valid) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Invalid OTP code. Please check your Authenticator app and try again.',
+                ], 422);
+            }
+
+            try {
+                $user->registerLoginLog();
+            } catch (\Throwable $th) {}
+
+            $deviceName = $request->device_name ?? 'Mobile Device';
+            $token = $user->createToken($deviceName)->plainTextToken;
+
+            return response()->json([
+                'success'      => true,
+                'message'      => 'Login successful.',
+                'access_token' => $token,
+                'token_type'   => 'Bearer',
+                'user'         => new UserResource($user),
+            ], 200);
+        } catch (Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Invalid or expired 2FA session token. Please log in again.',
+            ], 401);
+        }
     }
 
     /**

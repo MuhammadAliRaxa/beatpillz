@@ -374,18 +374,44 @@
   "device_name": "iPhone 15 Pro"
 }
 
+// Response (200 OK - Standard)
+{
+  "success": true,
+  "message": "Login successful.",
+  "access_token": "2|aBcDeF654321...",
+  "token_type": "Bearer",
+  "user": { ... }
+}
+
+// Response (200 OK - When 2FA is Active)
+{
+  "success": true,
+  "requires_2fa": true,
+  "two_factor_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+  "message": "2FA authentication code required."
+}</pre>
+    </div>
+
+    <div class="endpoint-card">
+        <div class="endpoint-header">
+            <span class="badge badge-post">POST</span>
+            <span class="endpoint-path">/auth/2fa/verify</span>
+        </div>
+        <p>Complete login by validating the 6-digit TOTP code with the <code>two_factor_token</code>.</p>
+<pre>// Request
+{
+  "two_factor_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+  "otp_code": "123456",
+  "device_name": "iPhone 15 Pro"
+}
+
 // Response (200 OK)
 {
   "success": true,
   "message": "Login successful.",
   "access_token": "2|aBcDeF654321...",
   "token_type": "Bearer",
-  "user": {
-    "id": 1,
-    "username": "johndoe",
-    "email": "johndoe@example.com",
-    "balance": 25.50
-  }
+  "user": { ... }
 }</pre>
     </div>
 
@@ -490,6 +516,33 @@
             <span class="badge badge-auth">Token Required</span>
         </div>
         <p>Change password (requires <code>current_password</code>, <code>password</code>, <code>password_confirmation</code>).</p>
+    </div>
+
+    <div class="endpoint-card">
+        <div class="endpoint-header">
+            <span class="badge badge-get">GET</span>
+            <span class="endpoint-path">/user/2fa</span>
+            <span class="badge badge-auth">Token Required</span>
+        </div>
+        <p>Get 2FA status, secret key, inline Base64 QR code image, and <code>otpauth://</code> setup URL.</p>
+    </div>
+
+    <div class="endpoint-card">
+        <div class="endpoint-header">
+            <span class="badge badge-post">POST</span>
+            <span class="endpoint-path">/user/2fa/enable</span>
+            <span class="badge badge-auth">Token Required</span>
+        </div>
+        <p>Enable 2FA authentication by verifying a 6-digit TOTP code (<code>otp_code</code>).</p>
+    </div>
+
+    <div class="endpoint-card">
+        <div class="endpoint-header">
+            <span class="badge badge-post">POST</span>
+            <span class="endpoint-path">/user/2fa/disable</span>
+            <span class="badge badge-auth">Token Required</span>
+        </div>
+        <p>Disable 2FA authentication by confirming with a 6-digit TOTP code (<code>otp_code</code>).</p>
     </div>
 
     <div class="endpoint-card">
@@ -886,6 +939,24 @@
     <div class="endpoint-card">
         <div class="endpoint-header">
             <span class="badge badge-get">GET</span>
+            <span class="endpoint-path">/user/purchases/{id}/license</span>
+            <span class="badge badge-auth">Token Required</span>
+        </div>
+        <p>Returns structured legal license certificate metadata (certificate ID, license permissions, buyer/producer info, and printable web URL).</p>
+    </div>
+
+    <div class="endpoint-card">
+        <div class="endpoint-header">
+            <span class="badge badge-post">POST</span>
+            <span class="endpoint-path">/tools/verify-license</span>
+            <span class="badge badge-auth">Token Required</span>
+        </div>
+        <p>Producer license verification tool. Validates a buyer's <code>purchase_code</code> against the producer's catalog to verify genuine ownership, license rights, and buyer profile.</p>
+    </div>
+
+    <div class="endpoint-card">
+        <div class="endpoint-header">
+            <span class="badge badge-get">GET</span>
             <span class="endpoint-path">/user/statements</span>
             <span class="badge badge-auth">Token Required</span>
         </div>
@@ -1006,7 +1077,19 @@
                 <td><span class="badge badge-get">GET</span></td>
                 <td><code>/user/subscription</code></td>
                 <td><span class="badge badge-auth">Token</span></td>
-                <td>Check user's current subscription & expiry date</td>
+                <td>Check user's current subscription, download counters & expiry date</td>
+            </tr>
+            <tr>
+                <td><span class="badge badge-post">POST</span></td>
+                <td><code>/plans/{id}/subscribe</code></td>
+                <td><span class="badge badge-auth">Token</span></td>
+                <td>Subscribe to plan (free instant, wallet balance, or gateway checkout)</td>
+            </tr>
+            <tr>
+                <td><span class="badge badge-get">GET</span></td>
+                <td><code>/items/{id}/download-premium</code></td>
+                <td><span class="badge badge-auth">Token</span></td>
+                <td>Direct subscriber download for premium beats without cart checkout</td>
             </tr>
             <tr>
                 <td><span class="badge badge-get">GET</span></td>

@@ -59,6 +59,7 @@ Route::namespace('Api\Mobile')->prefix('v1')->name('api.v1.')->group(function ()
     Route::prefix('auth')->name('auth.')->group(function () {
         Route::post('register', 'AuthController@register')->name('register');
         Route::post('login', 'AuthController@login')->name('login');
+        Route::post('2fa/verify', 'AuthController@verify2fa')->name('2fa.verify');
         Route::post('social-login', 'AuthController@socialLogin')->name('social-login');
         Route::post('forgot-password', 'AuthController@forgotPassword')->name('forgot-password');
     });
@@ -117,6 +118,9 @@ Route::namespace('Api\Mobile')->prefix('v1')->name('api.v1.')->group(function ()
             Route::post('cover', 'ProfileController@updateCover')->name('cover.update');
             Route::post('profile-cover', 'ProfileController@updateCover')->name('profile-cover.update');
             Route::put('password', 'ProfileController@changePassword')->name('password.update');
+            Route::get('2fa', 'TwoFactorController@index')->name('2fa.index');
+            Route::post('2fa/enable', 'TwoFactorController@enable')->name('2fa.enable');
+            Route::post('2fa/disable', 'TwoFactorController@disable')->name('2fa.disable');
             Route::get('kyc', 'ProfileController@kycStatus')->name('kyc.status');
             Route::post('kyc', 'ProfileController@submitKyc')->name('kyc.submit');
             Route::get('kyc/documents/{document}', 'ProfileController@kycDocument')->name('kyc.document');
@@ -126,6 +130,7 @@ Route::namespace('Api\Mobile')->prefix('v1')->name('api.v1.')->group(function ()
             Route::put('withdrawal-account', 'ProfileController@updateWithdrawalAccount')->name('withdrawal-account');
             Route::get('following', 'ProducerController@following')->name('following');
             Route::get('subscription', 'PlanController@userSubscription')->name('subscription');
+            Route::post('plans/{id}/subscribe', 'PlanController@subscribe')->name('plans.subscribe');
             Route::get('referrals', 'ProfileController@referrals')->name('referrals');
             Route::get('api-key', 'ProfileController@apiKey')->name('api-key');
             Route::post('api-key/generate', 'ProfileController@apiKeyGenerate')->name('api-key.generate');
@@ -133,12 +138,17 @@ Route::namespace('Api\Mobile')->prefix('v1')->name('api.v1.')->group(function ()
             // Library & Downloads
             Route::get('purchases', 'PurchaseController@index')->name('purchases');
             Route::get('purchases/{id}/download', 'PurchaseController@download')->name('purchases.download');
+            Route::get('purchases/{id}/license', 'PurchaseController@license')->name('purchases.license');
             Route::get('statements', 'PurchaseController@statements')->name('statements');
         });
+
+        // Tools & Utilities
+        Route::post('tools/verify-license', 'PurchaseController@verifyLicense')->name('tools.verify-license');
 
         // Wishlist, Reviews & Social Interactions
         Route::get('favorites', 'ItemController@favorites')->name('favorites');
         Route::post('items/{id}/favorite', 'ItemController@toggleFavorite')->name('items.favorite');
+        Route::get('items/{id}/download-premium', 'ItemController@downloadPremium')->name('items.download-premium');
         Route::post('items/{id}/reviews', 'ItemController@storeReview')->name('items.reviews.store');
         Route::post('items/{id}/comments', 'ItemController@storeComment')->name('items.comments.store');
         Route::post('producers/{id}/follow', 'ProducerController@toggleFollow')->name('producers.follow');

@@ -11,6 +11,7 @@ use App\Models\ItemComment;
 use App\Models\ItemCommentReply;
 use App\Models\ItemReview;
 use App\Models\Purchase;
+use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 
@@ -412,5 +413,87 @@ class ItemController extends Controller
             'success' => true,
             'data'    => $items->values(),
         ], 200);
+    }
+
+    /**
+     * Download main files for a premium beat using an active subscriber membership.
+     */
+    public function downloadPremium(Request $request, $id)
+    {
+        $user = $request->user();
+        if (!$user) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Unauthenticated.',
+            ], 401);
+        }
+
+        $item = Item::where('id', $id)
+            ->where('status', Item::STATUS_APPROVED)
+            ->where('is_premium', 1)
+            ->first();
+
+        if (!$item) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Premium beat not found or not eligible for subscription downloads.',
+            ], 404);
+        }
+
+        if (!method_exists($user, 'isSubscribed') || !$user->isSubscribed()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'An active premium subscription is required to download this beat.',
+            ], 403);
+        }
+
+        if ($item->author_id == $user->id) {
+            return response()->json([
+                'success' => false,
+                'message' => 'You cannot download your own item via subscription.',
+            ], 400);
+        }
+
+        $subscription = $user->subscription;
+        if (!$subscription) {
+            return response()->json([
+                'success' => false,
+                'message' => 'No active subscription found.',
+            ], 403);
+        }
+
+        if ($subscription->isExpired()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Your subscription has expired. Please renew your plan.',
+            ], 403);
+        }
+
+        if ($subscription->isDailyLimitReached()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'You have exceeded your download quota. Please upgrade your plan or wait until your limit resets.',
+            ], 429);
+        }
+
+        try {
+            $subscription->increment('total_downloads');
+
+            if ($item->isMainFileExternal()) {
+                return response()->json([
+                    'success'      => true,
+                    'is_external'  => true,
+                    'download_url' => $item->main_file,
+                    'filename'     => basename($item->main_file),
+                ], 200);
+            }
+
+            return $item->download();
+        } catch (Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage(),
+            ], 500);
+        }
     }
 }

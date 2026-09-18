@@ -190,6 +190,40 @@ Authorization: Bearer <access_token>
   * `login`: required, string
   * `password`: required, string
   * `device_name`: nullable, string, max:100
+* **Response `200 OK` (Standard Login)**:
+```json
+{
+  "success": true,
+  "message": "Login successful.",
+  "access_token": "2|aBcDeFgHiJ456...",
+  "token_type": "Bearer",
+  "user": { ... }
+}
+```
+
+* **Response `200 OK` (When 2FA is Enabled on Account)**:
+```json
+{
+  "success": true,
+  "requires_2fa": true,
+  "two_factor_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+  "message": "2FA authentication code required."
+}
+```
+
+---
+
+### `POST /auth/2fa/verify`
+* **Auth**: Public (Pass `two_factor_token` from login response)
+* **Description**: Verify the 6-digit TOTP Authenticator code and complete login.
+* **Payload**:
+```json
+{
+  "two_factor_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+  "otp_code": "123456",
+  "device_name": "Pixel 8 Pro"
+}
+```
 * **Response `200 OK`**:
 ```json
 {
@@ -197,30 +231,7 @@ Authorization: Bearer <access_token>
   "message": "Login successful.",
   "access_token": "2|aBcDeFgHiJ456...",
   "token_type": "Bearer",
-  "user": {
-    "id": 10,
-    "firstname": "John",
-    "lastname": "Doe",
-    "fullname": "John Doe",
-    "username": "johndoe",
-    "email": "john@example.com",
-    "avatar": "https://beatpillz.com/storage/images/avatars/avatar_10.jpg",
-    "profile_cover": null,
-    "profile_heading": "Producer & Sound Designer",
-    "profile_description": "Crafting trap and hiphop beats.",
-    "is_author": false,
-    "is_featured_author": false,
-    "balance": 25.50,
-    "currency": "USD",
-    "kyc_status": 0,
-    "total_sales": 0,
-    "total_sales_amount": 0.0,
-    "total_reviews": 0,
-    "avg_reviews": 0.0,
-    "total_followers": 0,
-    "social_links": [],
-    "created_at": "2026-01-15T12:00:00.000000Z"
-  }
+  "user": { ... }
 }
 ```
 
@@ -399,6 +410,79 @@ Authorization: Bearer <access_token>
 {
   "success": true,
   "message": "Password changed successfully."
+}
+```
+
+---
+
+### `GET /user/2fa`
+* **Auth**: Bearer Token Required
+* **Description**: Retrieve two-factor authentication status and setup QR code / manual key data.
+* **Response `200 OK` (2FA Disabled - Setup Details)**:
+```json
+{
+  "success": true,
+  "is_enabled": false,
+  "setup": {
+    "secret_key": "JBSWY3DPEHPK3PXP",
+    "qr_code_url": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0...",
+    "otpauth_url": "otpauth://totp/Beat%20Pillz:john@example.com?secret=JBSWY3DPEHPK3PXP&issuer=Beat+Pillz"
+  }
+}
+```
+* **Response `200 OK` (2FA Already Enabled)**:
+```json
+{
+  "success": true,
+  "is_enabled": true,
+  "setup": null
+}
+```
+
+---
+
+### `POST /user/2fa/enable`
+* **Auth**: Bearer Token Required
+* **Description**: Enable 2FA authentication by verifying a 6-digit code from Google Authenticator.
+* **Payload**:
+```json
+{
+  "otp_code": "123456"
+}
+```
+* **Response `200 OK`**:
+```json
+{
+  "success": true,
+  "message": "2FA Authentication has been enabled successfully.",
+  "is_enabled": true
+}
+```
+* **Error Response `422 Unprocessable`**:
+```json
+{
+  "success": false,
+  "message": "Invalid OTP code. Please check your Authenticator app and try again."
+}
+```
+
+---
+
+### `POST /user/2fa/disable`
+* **Auth**: Bearer Token Required
+* **Description**: Disable 2FA authentication by confirming with a 6-digit code.
+* **Payload**:
+```json
+{
+  "otp_code": "123456"
+}
+```
+* **Response `200 OK`**:
+```json
+{
+  "success": true,
+  "message": "2FA Authentication has been disabled successfully.",
+  "is_enabled": false
 }
 ```
 
@@ -1392,6 +1476,96 @@ Authorization: Bearer <access_token>
 
 ---
 
+### `GET /user/purchases/{id}/license`
+* **Auth**: Bearer Token Required
+* **Description**: Returns formatted legal license certificate data for rendering an in-app certificate agreement view or printable PDF.
+* **Path Parameter**: `id` (integer purchase ID)
+* **Response `200 OK`**:
+```json
+{
+  "success": true,
+  "certificate": {
+    "title": "License Certificate",
+    "purchase_code": "8A9B2C4D-5E6F-7G8H",
+    "license_type": 1,
+    "license_name": "Regular License",
+    "item": {
+      "id": 12,
+      "name": "Midnight Ride (Trap Beat)",
+      "slug": "midnight-ride-trap-beat",
+      "url": "https://beatpillz.com/beats/midnight-ride-trap-beat/12",
+      "thumbnail": "https://beatpillz.com/images/beats/thumb.jpg"
+    },
+    "licensor": {
+      "id": 4,
+      "name": "MetroBeats",
+      "username": "metrobeats"
+    },
+    "licensee": {
+      "id": 8,
+      "name": "John Doe",
+      "username": "johndoe",
+      "email": "johndoe@example.com"
+    },
+    "purchase_date": "2026-03-02T11:00:00.000000Z",
+    "support_expiry_at": "2026-09-02T11:00:00.000000Z",
+    "is_support_expired": false,
+    "web_certificate_url": "https://beatpillz.com/workspace/purchases/14/license",
+    "legal_notice": "This document certifies the legal purchase of the specified license. The licensee is granted permission to use the work in accordance with the license tier terms."
+  }
+}
+```
+
+---
+
+### `POST /tools/verify-license`
+* **Auth**: Bearer Token Required (Author / Producer)
+* **Description**: Producer license verification tool to verify whether a client/artist holds a genuine license for an item from their catalog.
+* **Body Payload**:
+```json
+{
+  "purchase_code": "8A9B2C4D-5E6F-7G8H"
+}
+```
+* **Response `200 OK` (Valid License)**:
+```json
+{
+  "success": true,
+  "is_valid": true,
+  "verification": {
+    "purchase_code": "8A9B2C4D-5E6F-7G8H",
+    "license_type": 1,
+    "license_name": "Regular License",
+    "item": {
+      "id": 12,
+      "name": "Midnight Ride (Trap Beat)",
+      "slug": "midnight-ride-trap-beat",
+      "url": "https://beatpillz.com/beats/midnight-ride-trap-beat/12"
+    },
+    "buyer": {
+      "id": 8,
+      "name": "John Doe",
+      "username": "johndoe",
+      "avatar": "https://beatpillz.com/images/avatars/user.jpg"
+    },
+    "purchase_date": "2026-03-02T11:00:00.000000Z",
+    "support_expiry_at": "2026-09-02T11:00:00.000000Z",
+    "is_support_expired": false,
+    "is_downloaded": true
+  }
+}
+```
+* **Response `404 Not Found` (Invalid / Fraudulent Code)**:
+```json
+{
+  "success": false,
+  "is_valid": false,
+  "message": "Invalid purchase code or no matching item found in your catalog."
+}
+```
+
+---
+
 ### `GET /user/statements`
 * **Auth**: Bearer Token Required
 * **Description**: Financial transaction history and wallet credit/debit statements.
@@ -1601,8 +1775,10 @@ Authorization: Bearer <access_token>
       "id": 1,
       "name": "Producer Pro",
       "short_description": "Unlimited downloads and zero marketplace commission fees",
-      "interval": "monthly",
+      "interval": "month",
+      "interval_name": "Monthly",
       "price": 19.99,
+      "is_free": false,
       "is_featured": true,
       "custom_features": ["Unlimited MP3 Downloads", "Direct Stems Access", "VIP Support"],
       "downloads": 50
@@ -1622,13 +1798,83 @@ Authorization: Bearer <access_token>
   "is_subscribed": true,
   "subscription": {
     "id": 3,
+    "plan_id": 1,
     "plan_name": "Producer Pro",
+    "interval_name": "Monthly",
+    "price": 19.99,
     "status": 1,
-    "expires_at": "2026-04-01T00:00:00.000000Z",
-    "created_at": "2026-03-01T00:00:00.000000Z"
+    "total_downloads": 12,
+    "downloads_limit": 50,
+    "is_unlimited": false,
+    "is_daily_limit_reached": false,
+    "is_expired": false,
+    "is_about_to_expire": false,
+    "days_remaining": 22,
+    "expires_at": "2026-10-18T16:00:00.000000Z",
+    "created_at": "2026-09-18T16:00:00.000000Z"
   }
 }
 ```
+
+---
+
+### `POST /plans/{id}/subscribe`
+Subscribe to a free plan directly, pay for a plan using account balance, or initialize a gateway transaction.
+* **Auth**: Bearer Token Required
+* **Path Parameter**: `id` (integer plan ID)
+* **Optional Body Parameters**:
+  * `pay_with_balance` (boolean, optional): Set to `true` to pay immediately using available wallet balance.
+
+* **Response for Free Plan / Wallet Balance (`200 OK`)**:
+```json
+{
+  "success": true,
+  "message": "Subscribed successfully using your wallet balance.",
+  "is_subscribed": true,
+  "user_balance": 80.01,
+  "subscription": {
+    "id": 4,
+    "plan_id": 1,
+    "plan_name": "Producer Pro",
+    "expires_at": "2026-10-18T16:00:00.000000Z"
+  }
+}
+```
+
+* **Response for Gateway Checkout Initialization (`200 OK`)**:
+```json
+{
+  "success": true,
+  "message": "Subscription transaction initialized.",
+  "transaction_id": 42,
+  "transaction_hash": "a1b2c3d4",
+  "amount": 19.99,
+  "checkout_url": "https://beatpillz.com/checkout/a1b2c3d4",
+  "user_balance": 5.00,
+  "can_pay_with_balance": false
+}
+```
+
+---
+
+### `GET /items/{id}/download-premium`
+Directly download a premium beat file using an active subscriber membership without adding to cart or purchasing separately.
+* **Auth**: Bearer Token Required (Active Subscription Required)
+* **Path Parameter**: `id` (integer item ID)
+* **Response `200 OK`**: File download binary stream or JSON download object for external storage:
+```json
+{
+  "success": true,
+  "is_external": true,
+  "download_url": "https://storage.beatpillz.com/beats/stems-archive.zip",
+  "filename": "stems-archive.zip"
+}
+```
+* **Error States**:
+  * `403 Forbidden`: Unsubscribed user or expired subscription.
+  * `429 Too Many Requests`: User reached daily/monthly download quota.
+
+---
 
 ---
 
