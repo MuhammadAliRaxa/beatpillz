@@ -108,21 +108,35 @@ class CartController extends Controller
             ->where('item_id', $item->id)
             ->first();
 
+        $alreadyInCart = false;
         if ($existing) {
+            $alreadyInCart = true;
             $existing->license_type = $request->license_type;
             $existing->save();
+            $cartItemId = $existing->id;
+            $message = 'Item license updated in cart.';
         } else {
-            CartItem::create([
+            $newCartItem = CartItem::create([
                 'user_id'      => $user->id,
                 'item_id'      => $item->id,
                 'license_type' => $request->license_type,
                 'quantity'     => 1,
             ]);
+            $cartItemId = $newCartItem->id;
+            $message = 'Item added to cart successfully.';
         }
 
+        $cartCount = CartItem::where('user_id', $user->id)->count();
+
         return response()->json([
-            'success' => true,
-            'message' => 'Item added to cart.',
+            'success'         => true,
+            'message'         => $message,
+            'is_in_cart'      => true,
+            'already_in_cart' => $alreadyInCart,
+            'cart_item_id'    => $cartItemId,
+            'license_type'    => (int) $request->license_type,
+            'license_name'    => (int) $request->license_type === 1 ? 'Non-Exclusive (Regular)' : 'Exclusive (Extended)',
+            'cart_count'      => $cartCount,
         ], 200);
     }
 

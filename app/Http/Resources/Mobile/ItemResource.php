@@ -31,8 +31,16 @@ class ItemResource extends JsonResource
         $previewVideo = $resolveFileUrl($this->preview_video);
 
         $isFavorited = false;
+        $isInCart = false;
+        $cartLicenseType = null;
         if (auth('sanctum')->check()) {
-            $isFavorited = auth('sanctum')->user()->favorites()->where('item_id', $this->id)->exists();
+            $user = auth('sanctum')->user();
+            $isFavorited = $user->favorites()->where('item_id', $this->id)->exists();
+            $cartItem = \App\Models\CartItem::where('user_id', $user->id)->where('item_id', $this->id)->first();
+            if ($cartItem) {
+                $isInCart = true;
+                $cartLicenseType = (int) $cartItem->license_type;
+            }
         }
 
         return [
@@ -58,6 +66,9 @@ class ItemResource extends JsonResource
             'is_best_selling'     => (bool) $this->is_best_selling,
             'is_featured'         => (bool) $this->is_featured,
             'is_favorited'        => (bool) $isFavorited,
+            'is_in_cart'          => (bool) $isInCart,
+            'in_cart'             => (bool) $isInCart,
+            'cart_license_type'   => $cartLicenseType,
             'total_sales'         => (int) $this->total_sales,
             'total_reviews'       => (int) $this->total_reviews,
             'avg_reviews'         => (float) $this->avg_reviews,
