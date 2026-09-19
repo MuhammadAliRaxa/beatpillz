@@ -14,12 +14,12 @@ class CartItem extends Model
 
     public function isLicenseTypeRegular()
     {
-        return $this->license_type == self::LICENSE_TYPE_REGULAR;
+        return (int) $this->license_type === self::LICENSE_TYPE_REGULAR;
     }
 
     public function isLicenseTypeExtended()
     {
-        return $this->license_type == self::LICENSE_TYPE_EXTENDED;
+        return (int) $this->license_type === self::LICENSE_TYPE_EXTENDED;
     }
 
     public function scopeForCurrentSession($query)

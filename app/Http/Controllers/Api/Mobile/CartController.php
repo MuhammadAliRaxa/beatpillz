@@ -45,16 +45,40 @@ class CartController extends Controller
     {
         if ($request->has('license_type')) {
             $raw = strtolower(trim((string) $request->license_type));
-            if (in_array($raw, ['2', 'extended', 'premium wav', 'exclusive rights', 'trackout stems', 'exclusive', 'stem', 'stems'])) {
-                $request->merge(['license_type' => '2']);
-            } elseif (in_array($raw, ['1', 'regular', 'standard mp3', 'mp3', 'non-exclusive', 'basic'])) {
-                $request->merge(['license_type' => '1']);
+            $clean = preg_replace('/[_\-]+/', ' ', $raw);
+            $cleanNoSpace = str_replace(' ', '', $clean);
+
+            // Check non-exclusive / regular variations first
+            if (
+                in_array($raw, ['1', 'regular', 'standard mp3', 'mp3', 'non-exclusive', 'non_exclusive', 'nonexclusive', 'basic', 'standard', 'lease'])
+                || str_contains($clean, 'non exclusive')
+                || str_contains($clean, 'regular')
+                || str_contains($clean, 'basic')
+                || str_contains($clean, 'mp3')
+                || str_contains($clean, 'standard')
+                || $cleanNoSpace === 'nonexclusive'
+            ) {
+                $request->merge(['license_type' => 1]);
+            } elseif (
+                in_array($raw, ['2', 'extended', 'premium wav', 'exclusive rights', 'trackout stems', 'exclusive', 'stem', 'stems', 'wav', 'trackout'])
+                || str_contains($clean, 'exclusive')
+                || str_contains($clean, 'extended')
+                || str_contains($clean, 'premium')
+                || str_contains($clean, 'stem')
+                || str_contains($clean, 'wav')
+                || str_contains($clean, 'trackout')
+            ) {
+                $request->merge(['license_type' => 2]);
+            } else {
+                $request->merge(['license_type' => 1]);
             }
+        } else {
+            $request->merge(['license_type' => 1]);
         }
 
         $validator = Validator::make($request->all(), [
             'item_id'      => ['required', 'exists:items,id'],
-            'license_type' => ['required', 'in:1,2'], // 1: Regular, 2: Extended
+            'license_type' => ['required', 'in:1,2'], // 1: Regular (Non-Exclusive), 2: Extended (Exclusive)
         ]);
 
         if ($validator->fails()) {
