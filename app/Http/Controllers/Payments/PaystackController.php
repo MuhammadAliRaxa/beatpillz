@@ -22,21 +22,44 @@ class PaystackController extends Controller
     {
         try {
             $reference = 'pys_' . Str::random(22);
+            $amount = round($this->paymentGateway->getChargeAmount($trx->total) * 100);
+            $currency = $this->paymentGateway->getCurrency();
+            $email = $trx->user->email;
 
-            $data['body'] = [
-                'key' => $this->paymentGateway->credentials->public_key,
-                'email' => $trx->user->email,
-                'amount' => ($this->paymentGateway->getChargeAmount($trx->total) * 100),
-                'currency' => $this->paymentGateway->getCurrency(),
-                'ref' => $reference,
-            ];
+            $client = new Client();
+            $paystackSecretKey = $this->paymentGateway->credentials->secret_key ?? null;
 
-            $trx->payment_id = $reference;
-            $trx->update();
+            if (!$paystackSecretKey) {
+                throw new \Exception('Paystack secret key is missing in payment gateway settings.');
+            }
 
-            $data['type'] = "success";
-            $data['method'] = "hosted";
-            $data['view'] = 'paystack';
+            $response = $client->request('POST', 'https://api.paystack.co/transaction/initialize', [
+                'headers' => [
+                    'Authorization' => 'Bearer ' . $paystackSecretKey,
+                    'Content-Type'  => 'application/json',
+                    'Accept'        => 'application/json',
+                ],
+                'json' => [
+                    'email'        => $email,
+                    'amount'       => $amount,
+                    'currency'     => $currency,
+                    'reference'    => $reference,
+                    'callback_url' => route('payments.ipn.paystack'),
+                ],
+            ]);
+
+            $result = json_decode($response->getBody(), true);
+
+            if ($result && isset($result['status']) && $result['status'] && isset($result['data']['authorization_url'])) {
+                $trx->payment_id = $reference;
+                $trx->update();
+
+                $data['type'] = "success";
+                $data['method'] = "redirect";
+                $data['redirect_url'] = $result['data']['authorization_url'];
+            } else {
+                throw new \Exception($result['message'] ?? translate('Unable to initialize Paystack payment session.'));
+            }
         } catch (\Exception $e) {
             $data['type'] = "error";
             $data['msg'] = $e->getMessage();
@@ -47,7 +70,12 @@ class PaystackController extends Controller
 
     public function ipn(Request $request)
     {
-        $reference = $request->reference;
+        $reference = $request->reference ?? $request->trxref;
+
+        if (!$reference) {
+            toastr()->error(translate('Payment reference is missing.'));
+            return redirect()->route('home');
+        }
 
         $trx = Transaction::where('user_id', authUser()->id)
             ->where('payment_id', $reference)

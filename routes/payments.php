@@ -14,7 +14,7 @@ Route::name('payments.')->prefix('payments')->namespace('Payments')->group(funct
         Route::get('coinbase', 'CoinbaseController@ipn')->name('coinbase');
         Route::get('coingate', 'CoingateController@ipn')->name('coingate');
         Route::get('flutterwave', 'FlutterwaveController@ipn')->name('flutterwave');
-        Route::post('paystack', 'PaystackController@ipn')->name('paystack');
+        Route::match(['get', 'post'], 'paystack', 'PaystackController@ipn')->name('paystack');
         Route::post('razorpay', 'RazorpayController@ipn')->name('razorpay');
         Route::get('midtrans', 'MidtransController@ipn')->name('midtrans');
         Route::get('xendit', 'XenditController@ipn')->name('xendit');
