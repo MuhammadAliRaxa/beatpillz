@@ -162,49 +162,14 @@ class CheckoutController extends Controller
 
             // Mark transaction as paid
             $transaction->status = Transaction::STATUS_PAID;
-            $transaction->payment_gateway = 'balance';
+            $transaction->payment_gateway_id = PaymentGateway::where('alias', 'balance')->first()->id ?? null;
             $transaction->save();
-
-            // Create purchases & author earnings
-            foreach ($transaction->items as $trxItem) {
-                $item = $trxItem->item;
-
-                // Create purchase record
-                $purchase = Purchase::create([
-                    'user_id'      => $user->id,
-                    'author_id'    => $item->author_id,
-                    'item_id'      => $item->id,
-                    'license_type' => $trxItem->license_type,
-                    'code'         => strtoupper(Str::random(20)),
-                    'status'       => Purchase::STATUS_ACTIVE,
-                ]);
-
-                // Credit Author Earnings
-                $author = $item->author;
-                if ($author) {
-                    $commissionRate = 0.70; // 70% to author default
-                    $authorEarning = round($trxItem->total * $commissionRate, 2);
-                    $author->increment('balance', $authorEarning);
-                    $author->increment('total_sales_amount', $authorEarning);
-                    $author->increment('total_sales', 1);
-
-                    // Record Sale
-                    Sale::create([
-                        'author_id'     => $author->id,
-                        'buyer_id'      => $user->id,
-                        'item_id'       => $item->id,
-                        'price'         => $trxItem->total,
-                        'author_earning'=> $authorEarning,
-                        'license_type'  => $trxItem->license_type,
-                    ]);
-                }
-
-                // Increment item total sales
-                $item->increment('total_sales', 1);
-            }
 
             // Empty cart
             CartItem::where('user_id', $user->id)->delete();
+
+            // Fire paid event to create sales, purchases, statements, and licenses
+            event(new \App\Events\TransactionPaid($transaction));
 
             DB::commit();
 
@@ -215,7 +180,7 @@ class CheckoutController extends Controller
                 'transaction_id' => $transaction->id,
             ], 200);
 
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
             DB::rollBack();
             return response()->json([
                 'success' => false,
@@ -279,6 +244,7 @@ class CheckoutController extends Controller
 
         $transaction->payment_gateway_id = $paymentGateway->id;
         $transaction->save();
+        $transaction->calculate();
 
         $controllerName = ucfirst(Str::studly($paymentGateway->alias));
         $class = "App\\Http\\Controllers\\Payments\\{$controllerName}Controller";
@@ -294,11 +260,21 @@ class CheckoutController extends Controller
             $processor = new $class();
             $response = json_decode($processor->process($transaction));
 
-            if ($response && isset($response->type) && $response->type === 'success' && isset($response->redirect_url)) {
+            if ($response && isset($response->type) && $response->type === 'success' && !empty($response->redirect_url)) {
                 return response()->json([
                     'success'      => true,
                     'payment_url'  => $response->redirect_url,
                     'redirect_url' => $response->redirect_url,
+                ], 200);
+            }
+
+            $checkoutUrl = function_exists('hash_encode') ? route('checkout.index', hash_encode($transaction->id)) : url('/checkout/' . $transaction->id);
+
+            if ($response && isset($response->type) && $response->type === 'success') {
+                return response()->json([
+                    'success'      => true,
+                    'payment_url'  => $checkoutUrl,
+                    'redirect_url' => $checkoutUrl,
                 ], 200);
             }
 
@@ -307,7 +283,7 @@ class CheckoutController extends Controller
                 'success' => false,
                 'message' => $errorMsg,
             ], 400);
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
             return response()->json([
                 'success' => false,
                 'message' => 'Error initializing payment gateway: ' . $e->getMessage(),
