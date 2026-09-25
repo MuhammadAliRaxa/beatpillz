@@ -123,6 +123,40 @@ Authorization: Bearer <access_token>
     }
   }
 }
+### `GET /currencies`
+* **Auth**: Public
+* **Description**: Returns all supported currencies, their exchange conversion rates, currency symbols, and the platform default currency.
+* **Response `200 OK`**:
+```json
+{
+  "success": true,
+  "default_currency": {
+    "code": "USD",
+    "symbol": "$",
+    "position": 1,
+    "rate": 1.0
+  },
+  "currencies": [
+    {
+      "code": "USD",
+      "symbol": "$",
+      "position": 1,
+      "position_name": "Before price",
+      "rate": 1.0,
+      "icon": "https://beatpillz.com/assets/images/currencies/usd.png",
+      "is_default": true
+    },
+    {
+      "code": "NGN",
+      "symbol": "₦",
+      "position": 1,
+      "position_name": "Before price",
+      "rate": 1500.0,
+      "icon": null,
+      "is_default": false
+    }
+  ]
+}
 ```
 
 ---
