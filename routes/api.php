@@ -53,6 +53,7 @@ Route::namespace('Api\Mobile')->prefix('v1')->name('api.v1.')->group(function ()
 
     // Global App Configuration
     Route::get('config', 'ConfigController@index')->name('config');
+    Route::get('currencies', 'ConfigController@currencies')->name('currencies');
     Route::get('countries', 'ConfigController@countries')->name('countries');
 
     // Public Auth Endpoints

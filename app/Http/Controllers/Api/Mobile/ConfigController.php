@@ -60,6 +60,41 @@ class ConfigController extends Controller
     }
 
     /**
+     * Get all available currencies and default currency.
+     */
+    public function currencies()
+    {
+        $currencies = Currency::all();
+        $defaultCurrency = function_exists('defaultCurrency') ? @defaultCurrency() : null;
+
+        return response()->json([
+            'success'          => true,
+            'default_currency' => $defaultCurrency ? [
+                'code'     => $defaultCurrency->code,
+                'symbol'   => $defaultCurrency->symbol,
+                'position' => (int) $defaultCurrency->position,
+                'rate'     => (float) $defaultCurrency->rate,
+            ] : [
+                'code'     => 'USD',
+                'symbol'   => '$',
+                'position' => 1,
+                'rate'     => 1.0,
+            ],
+            'currencies'       => $currencies->map(function ($curr) {
+                return [
+                    'code'          => $curr->code,
+                    'symbol'        => $curr->symbol,
+                    'position'      => (int) $curr->position,
+                    'position_name' => $curr->getPositionName(),
+                    'rate'          => (float) $curr->rate,
+                    'icon'          => $curr->icon ? asset($curr->icon) : null,
+                    'is_default'    => (bool) $curr->isDefault(),
+                ];
+            }),
+        ], 200);
+    }
+
+    /**
      * Get all available countries for selection.
      */
     public function countries()
