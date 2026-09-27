@@ -1,0 +1,54 @@
+{
+    "name": "Help Center",
+    "alias": "help_center",
+    "version": "1.0",
+    "thumbnail": "images/addons/help-center/thumbnail.png",
+    "path": "addons/help-center",
+    "action": null,
+    "status": false,
+    "type": "addon",
+    "item": {
+        "alias": "uab_marketbob",
+        "version": "1.3"
+    },
+    "script": {
+        "alias": "marketbob",
+        "version": "2.1"
+    },
+    "database": {
+        "files": [
+            "addons/help-center/sql/drop.sql",
+            "addons/help-center/sql/help_categories.sql",
+            "addons/help-center/sql/help_articles.sql"
+        ]
+    },
+    "general_files": {
+        "remove": {
+            "directories": [],
+            "files": []
+        },
+        "create": {
+            "directories": ["public/images/addons/help-center/"]
+        },
+        "copy": {
+            "directories": [{
+                    "root": "addons/help-center/controllers/Admin/Help/",
+                    "destination": "app/Http/Controllers/Admin/Help/"
+                },
+                {
+                    "root": "addons/help-center/views/admin/help/",
+                    "destination": "resources/views/admin/help/"
+                }
+            ],
+            "files": [{
+                    "root": "addons/help-center/thumbnail.png",
+                    "destination": "public/images/addons/help-center/thumbnail.png"
+                },
+                {
+                    "root": "addons/help-center/controllers/HelpController.php",
+                    "destination": "app/Http/Controllers/HelpController.php"
+                }
+            ]
+        }
+    }
+}

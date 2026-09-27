@@ -1,0 +1,24 @@
+:root {
+  --primary_color: #ff9c00;
+  --secondary_color: #222222;
+  --background_color: #222222;
+  --navbar1_background_color: #222222;
+  --navbar2_background_color: #ffffff;
+  --trending_item_badge_color: #0074e4;
+  --sale_item_badge_color: #0bbe9a;
+  --free_item_badge_color: #743cee;
+  --header_background_color: #f7f7f7;
+  --swiper_background_color: #ecf5f8;
+  --text_color: #665e5e;
+  --heading_color: #ffffff;
+  --text_muted: #8593af;
+  --border_color: #ececec;
+  --dashboard_sidebar_header_background_color: #262626;
+  --dashboard_sidebar_body_background_color: #333333;
+  --dashboard_sidebar_elements_background_color: #3d3d3d;
+  --files_icon_color: #ff9c00;
+  --item_preview_navbar_background: #222222;
+  --footer_background_color: #222222;
+  --footer_border_color: #292929;
+  --footer_text_color: #888888;
+}

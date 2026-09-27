@@ -1,0 +1,62 @@
+{
+    "name": "Newsletter",
+    "alias": "newsletter",
+    "version": "1.1",
+    "thumbnail": "images/addons/newsletter/thumbnail.png",
+    "path": "addons/newsletter",
+    "action": "settings/newsletter",
+    "status": false,
+    "type": "addon",
+    "item": {
+        "alias": "uab_marketbob",
+        "version": "1.4"
+    },
+    "script": {
+        "alias": "marketbob",
+        "version": "2.2"
+    },
+    "database": {
+        "files": ["addons/newsletter/sql/database.sql"]
+    },
+    "general_files": {
+        "remove": {
+            "directories": [],
+            "files": []
+        },
+        "create": {
+            "directories": [
+                "public/images/addons/newsletter/",
+                "public/images/newsletter/",
+                "app/Livewire/Newsletter/"
+            ]
+        },
+        "copy": {
+            "directories": [],
+            "files": [{
+                    "root": "addons/newsletter/thumbnail.png",
+                    "destination": "public/images/addons/newsletter/thumbnail.png"
+                },
+                {
+                    "root": "addons/newsletter/images/newsletter.svg",
+                    "destination": "public/images/newsletter/newsletter.svg"
+                },
+                {
+                    "root": "addons/newsletter/controllers/NewsletterController.php",
+                    "destination": "app/Http/Controllers/Admin/Settings/NewsletterController.php"
+                },
+                {
+                    "root": "addons/newsletter/views/newsletter.blade.php",
+                    "destination": "resources/views/admin/settings/newsletter.blade.php"
+                },
+                {
+                    "root": "addons/newsletter/livewire/Footer.php",
+                    "destination": "app/Livewire/Newsletter/Footer.php"
+                },
+                {
+                    "root": "addons/newsletter/livewire/Popup.php",
+                    "destination": "app/Livewire/Newsletter/Popup.php"
+                }
+            ]
+        }
+    }
+}

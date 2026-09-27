@@ -1,0 +1,56 @@
+{
+    "name": "Multi Currency",
+    "alias": "multi_currency",
+    "version": "1.0",
+    "thumbnail": "images/addons/multi-currency/thumbnail.png",
+    "path": "addons/multi-currency",
+    "action": "financial/currencies",
+    "status": 0,
+    "type": "addon",
+    "item": {
+        "alias": "uab_marketbob",
+        "version": "1.5"
+    },
+    "script": {
+        "alias": "marketbob",
+        "version": "2.3"
+    },
+    "database": {
+        "files": ["addons/multi-currency/sql/database.sql"]
+    },
+    "general_files": {
+        "remove": {
+            "directories": [],
+            "files": []
+        },
+        "create": {
+            "directories": [
+                "public/images/addons/multi-currency/",
+                "public/images/currencies/"
+            ]
+        },
+        "copy": {
+            "directories": [{
+                "root": "addons/multi-currency/views/",
+                "destination": "resources/views/admin/"
+            }],
+            "files": [{
+                    "root": "addons/multi-currency/thumbnail.png",
+                    "destination": "public/images/addons/multi-currency/thumbnail.png"
+                },
+                {
+                    "root": "addons/multi-currency/images/usd.png",
+                    "destination": "public/images/currencies/usd.png"
+                },
+                {
+                    "root": "addons/multi-currency/controllers/CurrencyController.php",
+                    "destination": "app/Http/Controllers/Admin/Financial/CurrencyController.php"
+                },
+                {
+                    "root": "addons/multi-currency/middleware/CurrencyMiddleware.php",
+                    "destination": "app/Http/Middleware/CurrencyMiddleware.php"
+                }
+            ]
+        }
+    }
+}

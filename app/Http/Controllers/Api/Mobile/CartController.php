@@ -1,0 +1,191 @@
+<?php
+
+namespace App\Http\Controllers\Api\Mobile;
+
+use App\Http\Controllers\Controller;
+use App\Http\Resources\Mobile\CartResource;
+use App\Models\CartItem;
+use App\Models\Item;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Validator;
+
+class CartController extends Controller
+{
+    /**
+     * Get user's active cart.
+     */
+    public function index(Request $request)
+    {
+        $user = $request->user();
+        if (!$user) return response()->json(['success' => false, 'message' => 'Unauthenticated.'], 401);
+        $cartItems = CartItem::where('user_id', $user->id)
+            ->with(['item.author', 'item.category', 'item.discount'])
+            ->get();
+
+        $subtotal = 0;
+        foreach ($cartItems as $cartItem) {
+            $subtotal += $cartItem->getTotalAmount();
+        }
+
+        return response()->json([
+            'success' => true,
+            'data'    => [
+                'items'       => CartResource::collection($cartItems),
+                'items_count' => $cartItems->count(),
+                'subtotal'    => (float) $subtotal,
+                'currency'    => function_exists('defaultCurrency') ? @defaultCurrency()->code : 'USD',
+            ],
+        ], 200);
+    }
+
+    /**
+     * Add beat to cart.
+     */
+    public function add(Request $request)
+    {
+        if ($request->has('license_type')) {
+            $raw = strtolower(trim((string) $request->license_type));
+            $clean = preg_replace('/[_\-]+/', ' ', $raw);
+            $cleanNoSpace = str_replace(' ', '', $clean);
+
+            // Check non-exclusive / regular variations first
+            if (
+                in_array($raw, ['1', 'regular', 'standard mp3', 'mp3', 'non-exclusive', 'non_exclusive', 'nonexclusive', 'basic', 'standard', 'lease'])
+                || str_contains($clean, 'non exclusive')
+                || str_contains($clean, 'regular')
+                || str_contains($clean, 'basic')
+                || str_contains($clean, 'mp3')
+                || str_contains($clean, 'standard')
+                || $cleanNoSpace === 'nonexclusive'
+            ) {
+                $request->merge(['license_type' => 1]);
+            } elseif (
+                in_array($raw, ['2', 'extended', 'premium wav', 'exclusive rights', 'trackout stems', 'exclusive', 'stem', 'stems', 'wav', 'trackout'])
+                || str_contains($clean, 'exclusive')
+                || str_contains($clean, 'extended')
+                || str_contains($clean, 'premium')
+                || str_contains($clean, 'stem')
+                || str_contains($clean, 'wav')
+                || str_contains($clean, 'trackout')
+            ) {
+                $request->merge(['license_type' => 2]);
+            } else {
+                $request->merge(['license_type' => 1]);
+            }
+        } else {
+            $request->merge(['license_type' => 1]);
+        }
+
+        $validator = Validator::make($request->all(), [
+            'item_id'      => ['required', 'exists:items,id'],
+            'license_type' => ['required', 'in:1,2'], // 1: Regular (Non-Exclusive), 2: Extended (Exclusive)
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'success' => false,
+                'message' => $validator->errors()->first(),
+            ], 422);
+        }
+
+        $user = $request->user();
+        if (!$user) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Unauthenticated.',
+            ], 401);
+        }
+        $item = Item::where('status', Item::STATUS_APPROVED)->findOrFail($request->item_id);
+
+        if ($item->author_id == $user->id) {
+            return response()->json([
+                'success' => false,
+                'message' => 'You cannot purchase your own item.',
+            ], 400);
+        }
+
+        $existing = CartItem::where('user_id', $user->id)
+            ->where('item_id', $item->id)
+            ->first();
+
+        $alreadyInCart = false;
+        if ($existing) {
+            $alreadyInCart = true;
+            $existing->license_type = $request->license_type;
+            $existing->save();
+            $cartItemId = $existing->id;
+            $message = 'Item license updated in cart.';
+        } else {
+            $newCartItem = CartItem::create([
+                'user_id'      => $user->id,
+                'item_id'      => $item->id,
+                'license_type' => $request->license_type,
+                'quantity'     => 1,
+            ]);
+            $cartItemId = $newCartItem->id;
+            $message = 'Item added to cart successfully.';
+        }
+
+        $cartCount = CartItem::where('user_id', $user->id)->count();
+
+        return response()->json([
+            'success'         => true,
+            'message'         => $message,
+            'is_in_cart'      => true,
+            'already_in_cart' => $alreadyInCart,
+            'cart_item_id'    => $cartItemId,
+            'license_type'    => (int) $request->license_type,
+            'license_name'    => (int) $request->license_type === 1 ? 'Non-Exclusive (Regular)' : 'Exclusive (Extended)',
+            'cart_count'      => $cartCount,
+        ], 200);
+    }
+
+    /**
+     * Remove item from cart.
+     */
+    public function remove(Request $request, $id)
+    {
+        $user = $request->user();
+        if (!$user) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Unauthenticated.',
+            ], 401);
+        }
+        $cartItem = CartItem::where('user_id', $user->id)->where('id', $id)->first();
+
+        if (!$cartItem) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Cart item not found.',
+            ], 404);
+        }
+
+        $cartItem->delete();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Item removed from cart.',
+        ], 200);
+    }
+
+    /**
+     * Clear entire cart.
+     */
+    public function clear(Request $request)
+    {
+        $user = $request->user();
+        if (!$user) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Unauthenticated.',
+            ], 401);
+        }
+        CartItem::where('user_id', $user->id)->delete();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Cart cleared.',
+        ], 200);
+    }
+}

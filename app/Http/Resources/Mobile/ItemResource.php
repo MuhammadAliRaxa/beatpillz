@@ -1,0 +1,102 @@
+<?php
+
+namespace App\Http\Resources\Mobile;
+
+use Illuminate\Http\Resources\Json\JsonResource;
+
+class ItemResource extends JsonResource
+{
+    public function toArray($request)
+    {
+        $hasDiscount = $this->hasDiscount() && $this->discount && $this->discount->isActive();
+
+        $resolveFileUrl = function ($path) {
+            if (!$path) {
+                return null;
+            }
+            if (\Illuminate\Support\Str::startsWith($path, ['http://', 'https://'])) {
+                return $path;
+            }
+            if (\Illuminate\Support\Str::startsWith($path, ['storage/', 'public/'])) {
+                return asset($path);
+            }
+            return function_exists('getLinkFromStorageProvider')
+                ? getLinkFromStorageProvider($path)
+                : asset($path);
+        };
+
+        $previewAudio = $resolveFileUrl($this->preview_audio);
+        $thumbnail = $resolveFileUrl($this->thumbnail ?: $this->preview_image);
+        $previewImage = $resolveFileUrl($this->preview_image);
+        $previewVideo = $resolveFileUrl($this->preview_video);
+
+        $isFavorited = false;
+        $isInCart = false;
+        $cartLicenseType = null;
+        if (auth('sanctum')->check()) {
+            $user = auth('sanctum')->user();
+            $isFavorited = $user->favorites()->where('item_id', $this->id)->exists();
+            $cartItem = \App\Models\CartItem::where('user_id', $user->id)->where('item_id', $this->id)->first();
+            if ($cartItem) {
+                $isInCart = true;
+                $cartLicenseType = (int) $cartItem->license_type;
+            }
+        }
+
+        return [
+            'id'                  => $this->id,
+            'name'                => $this->name,
+            'slug'                => $this->slug,
+            'description'         => $this->description,
+            'preview_type'        => $this->preview_type ?: ($this->preview_audio ? 'audio' : ($this->preview_video ? 'video' : 'image')),
+            'preview_audio_url'   => $previewAudio,
+            'preview_video_url'   => $previewVideo,
+            'preview_image_url'   => $previewImage,
+            'thumbnail_url'       => $thumbnail,
+            'price'               => [
+                'regular'          => (float) $this->getRegularPrice(),
+                'extended'         => (float) $this->getExtendedPrice(),
+                'has_discount'     => (bool) $hasDiscount,
+                'discount_regular' => $hasDiscount ? (float) $this->discount->getRegularPrice() : null,
+                'discount_percent' => $hasDiscount ? (int) $this->discount->percentage : 0,
+            ],
+            'is_free'             => (bool) $this->is_free,
+            'is_premium'          => (bool) $this->is_premium,
+            'is_trending'         => (bool) $this->is_trending,
+            'is_best_selling'     => (bool) $this->is_best_selling,
+            'is_featured'         => (bool) $this->is_featured,
+            'is_favorited'        => (bool) $isFavorited,
+            'is_in_cart'          => (bool) $isInCart,
+            'in_cart'             => (bool) $isInCart,
+            'cart_license_type'   => $cartLicenseType,
+            'total_sales'         => (int) $this->total_sales,
+            'total_reviews'       => (int) $this->total_reviews,
+            'avg_reviews'         => (float) $this->avg_reviews,
+            'category'            => $this->category ? [
+                'id'   => $this->category->id,
+                'name' => $this->category->name,
+                'slug' => $this->category->slug,
+            ] : null,
+            'subcategory'         => $this->subCategory ? [
+                'id'   => $this->subCategory->id,
+                'name' => $this->subCategory->name,
+                'slug' => $this->subCategory->slug,
+            ] : null,
+            'author'              => $this->author ? [
+                'id'        => $this->author->id,
+                'name'      => $this->author->getName(),
+                'username'  => $this->author->username,
+                'avatar'    => $this->author->avatar ? asset($this->author->avatar) : null,
+                'is_author' => (bool) $this->author->is_author,
+                'badges'    => BadgeResource::collection(
+                    $this->author->relationLoaded('badges')
+                        ? ($this->author->badges->first() && !$this->author->badges->first()->relationLoaded('badge') ? $this->author->badges->load('badge') : $this->author->badges)
+                        : $this->author->badges()->with('badge')->get()
+                ),
+            ] : null,
+            'tags'                => $this->tags ? explode(',', $this->tags) : [],
+            'created_at'          => $this->created_at ? $this->created_at->toISOString() : null,
+            'updated_at'          => $this->updated_at ? $this->updated_at->toISOString() : null,
+        ];
+    }
+}
