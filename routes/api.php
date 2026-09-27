@@ -193,6 +193,8 @@ Route::namespace('Api\Mobile')->prefix('v1')->name('api.v1.')->group(function ()
             Route::post('/', 'RefundController@store')->name('store');
             Route::get('{id}', 'RefundController@show')->name('show');
             Route::post('{id}/reply', 'RefundController@reply')->name('reply');
+            Route::post('{id}/accept', 'RefundController@accept')->name('accept');
+            Route::post('{id}/decline', 'RefundController@decline')->name('decline');
         });
 
         // Support Tickets

@@ -2107,6 +2107,48 @@ Directly download a premium beat file using an active subscriber membership with
 
 ---
 
+### `POST /refunds/{id}/accept`
+* **Auth**: Bearer Token Required (Producer / Item Author)
+* **Description**: Producer accepts the buyer's refund request. Instantly credits the buyer's wallet, debits the producer's balance, and cancels the purchase license.
+* **Response `200 OK`**:
+```json
+{
+  "success": true,
+  "message": "The refund request has been accepted and processed.",
+  "refund": {
+    "id": 14,
+    "status": 2,
+    "status_name": "Accepted"
+  }
+}
+```
+
+---
+
+### `POST /refunds/{id}/decline`
+* **Auth**: Bearer Token Required (Producer / Item Author)
+* **Description**: Producer declines the refund request with an explanation.
+* **Payload**:
+```json
+{
+  "reason": "The item was already downloaded and license key is active."
+}
+```
+* **Response `200 OK`**:
+```json
+{
+  "success": true,
+  "message": "The refund request has been declined.",
+  "refund": {
+    "id": 14,
+    "status": 3,
+    "status_name": "Declined"
+  }
+}
+```
+
+---
+
 ## 14. Support Tickets & FAQs
 
 ### `GET /tickets`
