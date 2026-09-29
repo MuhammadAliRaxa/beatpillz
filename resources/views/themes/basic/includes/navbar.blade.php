@@ -68,11 +68,15 @@
                             </a>
                         @endif
                         @guest
+                            @php
+                                $navRef = request('ref') ?? (session()->has('ref') ? session('ref') : null) ?? request()->cookie('_ref');
+                                $registerUrl = $navRef ? route('register', ['ref' => $navRef]) : route('register');
+                            @endphp
                             <a href="{{ route('login') }}" class="link-btn d-block d-xl-none">
                                 <button class="btn btn-outline-primary">{{ translate('Sign In') }}</button>
                             </a>
                             @if (@$settings->actions->registration)
-                                <a href="{{ route('register') }}" class="link-btn d-block d-xl-none">
+                                <a href="{{ $registerUrl }}" class="link-btn d-block d-xl-none">
                                     <button class="btn btn-primary">{{ translate('Sign Up') }}</button>
                                 </a>
                             @endif
@@ -102,7 +106,7 @@
                         <button class="btn btn-outline-primary">{{ translate('Sign In') }}</button>
                     </a>
                     @if (@$settings->actions->registration)
-                        <a href="{{ route('register') }}" class="link-btn">
+                        <a href="{{ $registerUrl }}" class="link-btn">
                             <button class="btn btn-primary">{{ translate('Sign Up') }}</button>
                         </a>
                     @endif

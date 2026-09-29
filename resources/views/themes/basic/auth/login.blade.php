@@ -42,7 +42,11 @@
             <x-oauth-buttons />
         </div>
         @if (@$settings->actions->registration)
-            <div class="mt-4 text-center">{{ translate("You don't have an account?") }} <a href="{{ route('register') }}"
+            @php
+                $loginRef = request('ref') ?? (session()->has('ref') ? session('ref') : null) ?? request()->cookie('_ref');
+                $loginRegUrl = $loginRef ? route('register', ['ref' => $loginRef]) : route('register');
+            @endphp
+            <div class="mt-4 text-center">{{ translate("You don't have an account?") }} <a href="{{ $loginRegUrl }}"
                     class="text-primary">{{ translate('Sign Up') }}</a>
             </div>
         @endif

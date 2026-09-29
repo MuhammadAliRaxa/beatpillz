@@ -33,6 +33,11 @@ class ReferralMiddleware
                         if ($request->hasSession()) {
                             $request->session()->put('ref', $referrer->username);
                         }
+
+                        // If guest opens a referral link on any non-register page, redirect directly to the register page
+                        if (!Auth::check() && !$request->is('register') && !$request->is('api/*')) {
+                            return redirect()->route('register', ['ref' => $referrer->username]);
+                        }
                     }
                 }
             }

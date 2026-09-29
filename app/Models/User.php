@@ -324,9 +324,9 @@ class User extends Authenticatable implements MustVerifyEmail
     public function getReferralLink()
     {
         if ($this->username) {
-            return route('home', 'ref=' . strtolower($this->username));
+            return route('register', ['ref' => strtolower($this->username)]);
         }
-        return route('home');
+        return route('register');
     }
 
     public function getReferredBy()
