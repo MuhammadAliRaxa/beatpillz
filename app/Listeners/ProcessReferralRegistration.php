@@ -15,19 +15,33 @@ class ProcessReferralRegistration
         $user = $event->user;
 
         if (@settings('referral')->status) {
-            if (request()->hasCookie('_ref')) {
-                $author = User::where('username', request()->cookie('_ref'))->first();
-                if ($author) {
-                    $referral = new Referral();
-                    $referral->author_id = $author->id;
-                    $referral->user_id = $user->id;
-                    $referral->save();
+            // Check request inputs, session fallback, then cookie
+            $refCode = request()->input('ref')
+                ?? request()->input('referral_code')
+                ?? (request()->hasSession() ? session('ref') : null)
+                ?? request()->cookie('_ref');
+
+            if ($refCode) {
+                $author = User::where('username', strtolower(trim($refCode)))->first();
+
+                // Prevent self-referral and avoid duplicate records
+                if ($author && $author->id !== $user->id) {
+                    $existingReferral = Referral::where('user_id', $user->id)->first();
+                    if (!$existingReferral) {
+                        $referral = new Referral();
+                        $referral->author_id = $author->id;
+                        $referral->user_id = $user->id;
+                        $referral->save();
+
+                        $badge = Badge::where('alias', Badge::REFERRER_BADGE_ALIAS)->first();
+                        if ($badge) {
+                            $author->addBadge($badge);
+                        }
+                    }
 
                     Cookie::queue(Cookie::forget('_ref'));
-
-                    $badge = Badge::where('alias', Badge::REFERRER_BADGE_ALIAS)->first();
-                    if ($badge) {
-                        $author->addBadge($badge);
+                    if (request()->hasSession()) {
+                        session()->forget('ref');
                     }
                 }
             }

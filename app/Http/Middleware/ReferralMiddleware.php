@@ -18,17 +18,26 @@ class ReferralMiddleware
      */
     public function handle(Request $request, Closure $next): Response
     {
-        if ($request->has('ref')) {
+        if ($request->filled('ref')) {
             if (@settings('referral')->status) {
-                if (!Auth::user()) {
-                    $referrer = User::where('username', $request->ref)->first();
+                $currentUsername = Auth::check() ? Auth::user()->username : null;
+                $refCode = strtolower(trim($request->ref));
+
+                if (!$currentUsername || strtolower($currentUsername) !== $refCode) {
+                    $referrer = User::where('username', $refCode)->first();
                     if ($referrer) {
-                        Cookie::queue('_ref', $referrer->username);
+                        // Store referral code in cookie for 90 days (129,600 minutes)
+                        Cookie::queue('_ref', $referrer->username, 60 * 24 * 90);
+
+                        // Also store in session as a fallback
+                        if ($request->hasSession()) {
+                            $request->session()->put('ref', $referrer->username);
+                        }
                     }
                 }
             }
-            return redirect()->route('home');
         }
+
         return $next($request);
     }
 }

@@ -193,7 +193,7 @@ Route::middleware(['maintenance'])->group(function () {
 
 Route::middleware(['oauth.complete', 'verified', '2fa.verify'])->group(function () {
     Route::get('/', 'HomeController@index')
-        ->name('home')->middleware('referral');
+        ->name('home');
 
     Route::middleware('maintenance')->group(function () {
         Route::name('premium.')->prefix('premium')->middleware(['license:2', 'premium.disable'])->group(function () {

@@ -25,8 +25,10 @@ class AuthController extends Controller
             'lastname'    => ['required', 'string', 'max:50'],
             'username'    => ['required', 'string', 'min:6', 'max:50', 'alpha_dash', 'unique:users,username'],
             'email'       => ['required', 'string', 'email', 'max:100', 'unique:users,email'],
-            'password'    => ['required', 'string', 'min:8', 'confirmed'],
-            'device_name' => ['nullable', 'string', 'max:100'],
+            'password'      => ['required', 'string', 'min:8', 'confirmed'],
+            'device_name'   => ['nullable', 'string', 'max:100'],
+            'ref'           => ['nullable', 'string', 'max:50'],
+            'referral_code' => ['nullable', 'string', 'max:50'],
         ]);
 
         if ($validator->fails()) {
@@ -296,8 +298,10 @@ class AuthController extends Controller
             'email'       => ['required', 'email'],
             'firstname'   => ['nullable', 'string', 'max:50'],
             'lastname'    => ['nullable', 'string', 'max:50'],
-            'avatar'      => ['nullable', 'string'],
-            'device_name' => ['nullable', 'string', 'max:100'],
+            'avatar'        => ['nullable', 'string'],
+            'device_name'   => ['nullable', 'string', 'max:100'],
+            'ref'           => ['nullable', 'string', 'max:50'],
+            'referral_code' => ['nullable', 'string', 'max:50'],
         ]);
 
         if ($validator->fails()) {
@@ -350,6 +354,10 @@ class AuthController extends Controller
 
             try {
                 $user->addCountryBadge();
+            } catch (\Throwable $th) {}
+
+            try {
+                event(new Registered($user));
             } catch (\Throwable $th) {}
         } else {
             // Link provider ID if not yet linked

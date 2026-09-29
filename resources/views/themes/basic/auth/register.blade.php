@@ -9,6 +9,16 @@
             </div>
             <form action="{{ route('register') }}" method="POST">
                 @csrf
+                @php
+                    $refCode = request('ref') ?? (session()->has('ref') ? session('ref') : null) ?? request()->cookie('_ref');
+                @endphp
+                @if($refCode)
+                    <input type="hidden" name="ref" value="{{ $refCode }}">
+                    <div class="alert alert-info py-2 px-3 mb-3 d-flex align-items-center" style="font-size: 0.85rem; border-radius: 8px;">
+                        <i class="fa fa-user-plus me-2"></i>
+                        <span>{{ translate('Referred by: :referrer', ['referrer' => '@' . $refCode]) }}</span>
+                    </div>
+                @endif
                 <div class="row g-3 mb-3">
                     <div class="col-lg-6">
                         <label class="form-label">{{ translate('First Name') }}</label>
