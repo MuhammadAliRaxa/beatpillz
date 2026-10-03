@@ -36,6 +36,8 @@ class PlanController extends Controller
                     'is_featured'       => (bool) $plan->isFeatured(),
                     'custom_features'   => $plan->custom_features ? (is_string($plan->custom_features) ? json_decode($plan->custom_features, true) : (array) $plan->custom_features) : [],
                     'downloads'         => (int) $plan->downloads,
+                    'apple_product_id'  => $plan->apple_product_id ?? null,
+                    'google_product_id' => $plan->google_product_id ?? null,
                 ];
             }),
         ], 200);
@@ -255,6 +257,65 @@ class PlanController extends Controller
                 'message' => $e->getMessage(),
             ], 500);
         }
+    }
+
+    /**
+     * Instantly sync / activate subscription after client-side In-App Purchase (StoreKit / Google Play).
+     */
+    public function syncSubscription(Request $request)
+    {
+        $user = $request->user();
+        if (!$user) {
+            return response()->json(['success' => false, 'message' => 'Unauthenticated.'], 401);
+        }
+
+        $productId = $request->input('product_id');
+        if (empty($productId)) {
+            return response()->json(['success' => false, 'message' => 'Product ID is required.'], 422);
+        }
+
+        $plan = Plan::findByStoreProductId($productId);
+        if (!$plan) {
+            return response()->json(['success' => false, 'message' => 'Subscription plan not found for product: ' . $productId], 404);
+        }
+
+        $expiryDate = null;
+        if ($request->filled('expiration_at_ms')) {
+            $expiryDate = Carbon::createFromTimestampMs((int) $request->input('expiration_at_ms'));
+        } elseif (!$plan->isLifetime()) {
+            $expiryDate = Carbon::now()->addDays($plan->getIntervalDays());
+        }
+
+        $subscription = $user->subscription()->updateOrCreate(
+            ['user_id' => $user->id],
+            [
+                'plan_id'              => $plan->id,
+                'total_downloads'      => 0,
+                'expiry_at'            => $expiryDate,
+                'last_notification_at' => null,
+            ]
+        );
+
+        $user->was_subscribed = User::WAS_SUBSCRIBED;
+        $user->save();
+
+        $badge = \App\Models\Badge::where('alias', \App\Models\Badge::PREMIUM_MEMBERSHIP_ALIAS)->first();
+        if ($badge) {
+            $user->addBadge($badge);
+        }
+
+        return response()->json([
+            'success'       => true,
+            'message'       => 'Subscription synchronized successfully.',
+            'is_subscribed' => true,
+            'subscription'  => [
+                'id'            => $subscription->id,
+                'plan_id'       => $plan->id,
+                'plan_name'     => $plan->name,
+                'interval_name' => $plan->getIntervalName(),
+                'expires_at'    => $subscription->expiry_at ? $subscription->expiry_at->toISOString() : null,
+            ],
+        ], 200);
     }
 }
 

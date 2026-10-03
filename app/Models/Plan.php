@@ -170,4 +170,46 @@ class Plan extends Model
     {
         return $this->hasMany(Subscription::class);
     }
+
+    /**
+     * Find plan by Apple StoreKit or Google Play Product ID with smart fallback.
+     */
+    public static function findByStoreProductId($productId)
+    {
+        if (empty($productId)) {
+            return null;
+        }
+
+        // 1. Exact match on apple_product_id or google_product_id
+        $plan = self::where('apple_product_id', $productId)
+            ->orWhere('google_product_id', $productId)
+            ->active()
+            ->first();
+
+        if ($plan) {
+            return $plan;
+        }
+
+        // 2. Fallback: match by Plan ID embedded in product string (e.g. "plan_2", "com.beatpillz.plan.2")
+        if (preg_match('/(?:plan[_-]?)(\d+)/i', $productId, $matches)) {
+            $planById = self::where('id', $matches[1])->active()->first();
+            if ($planById) {
+                return $planById;
+            }
+        }
+
+        // 3. Fallback: match by interval name keywords
+        $clean = strtolower($productId);
+        if (str_contains($clean, 'month')) {
+            return self::monthly()->active()->first();
+        } elseif (str_contains($clean, 'year') || str_contains($clean, 'annual')) {
+            return self::yearly()->active()->first();
+        } elseif (str_contains($clean, 'week')) {
+            return self::weekly()->active()->first();
+        } elseif (str_contains($clean, 'lifetime')) {
+            return self::lifetime()->active()->first();
+        }
+
+        return null;
+    }
 }

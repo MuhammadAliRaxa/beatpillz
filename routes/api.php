@@ -90,6 +90,7 @@ Route::namespace('Api\Mobile')->prefix('v1')->name('api.v1.')->group(function ()
 
     // Subscription & Premium Plans
     Route::get('plans', 'PlanController@index')->name('plans.index');
+    Route::post('webhooks/revenuecat', 'RevenueCatWebhookController@handle')->name('webhooks.revenuecat');
 
     // Blog & News
     Route::prefix('blog')->name('blog.')->group(function () {
@@ -131,6 +132,7 @@ Route::namespace('Api\Mobile')->prefix('v1')->name('api.v1.')->group(function ()
             Route::put('withdrawal-account', 'ProfileController@updateWithdrawalAccount')->name('withdrawal-account');
             Route::get('following', 'ProducerController@following')->name('following');
             Route::get('subscription', 'PlanController@userSubscription')->name('subscription');
+            Route::post('subscription/sync', 'PlanController@syncSubscription')->name('subscription.sync');
             Route::post('plans/{id}/subscribe', 'PlanController@subscribe')->name('user.plans.subscribe');
             Route::get('referrals', 'ProfileController@referrals')->name('referrals');
             Route::get('api-key', 'ProfileController@apiKey')->name('api-key');

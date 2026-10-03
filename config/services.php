@@ -65,4 +65,9 @@ return [
         'client_secret' => env('GITHUB_CLIENT_SECRET'),
         'redirect' => env('APP_URL') . '/oauth/github/callback',
     ],
+
+    'revenuecat' => [
+        'webhook_secret' => env('REVENUECAT_WEBHOOK_SECRET'),
+        'api_key'        => env('REVENUECAT_API_KEY'),
+    ],
 ];

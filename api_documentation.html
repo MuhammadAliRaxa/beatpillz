@@ -1104,6 +1104,18 @@
                 <td>Subscribe to plan (free instant, wallet balance, or gateway checkout)</td>
             </tr>
             <tr>
+                <td><span class="badge badge-post">POST</span></td>
+                <td><code>/user/subscription/sync</code></td>
+                <td><span class="badge badge-auth">Token</span></td>
+                <td>Instantly activate/sync subscription from mobile client after In-App Purchase (product_id, expiration_at_ms)</td>
+            </tr>
+            <tr>
+                <td><span class="badge badge-post">POST</span></td>
+                <td><code>/webhooks/revenuecat</code></td>
+                <td>Secret / Public</td>
+                <td>RevenueCat Server-to-Server Webhook (Apple StoreKit 2 & Google Play auto-sync, renewals, cancellations)</td>
+            </tr>
+            <tr>
                 <td><span class="badge badge-get">GET</span></td>
                 <td><code>/items/{id}/download-premium</code></td>
                 <td><span class="badge badge-auth">Token</span></td>
