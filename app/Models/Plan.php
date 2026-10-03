@@ -180,8 +180,9 @@ class Plan extends Model
             return null;
         }
 
-        // 1. Exact match on apple_product_id or google_product_id
-        $plan = self::where('apple_product_id', $productId)
+        // 1. Exact match on store_product_id, apple_product_id, or google_product_id
+        $plan = self::where('store_product_id', $productId)
+            ->orWhere('apple_product_id', $productId)
             ->orWhere('google_product_id', $productId)
             ->active()
             ->first();

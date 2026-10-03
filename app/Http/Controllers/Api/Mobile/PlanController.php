@@ -36,8 +36,9 @@ class PlanController extends Controller
                     'is_featured'       => (bool) $plan->isFeatured(),
                     'custom_features'   => $plan->custom_features ? (is_string($plan->custom_features) ? json_decode($plan->custom_features, true) : (array) $plan->custom_features) : [],
                     'downloads'         => (int) $plan->downloads,
-                    'apple_product_id'  => $plan->apple_product_id ?? null,
-                    'google_product_id' => $plan->google_product_id ?? null,
+                    'product_id'        => $plan->store_product_id ?? $plan->apple_product_id ?? $plan->google_product_id ?? null,
+                    'apple_product_id'  => $plan->apple_product_id ?? $plan->store_product_id ?? null,
+                    'google_product_id' => $plan->google_product_id ?? $plan->store_product_id ?? null,
                 ];
             }),
         ], 200);

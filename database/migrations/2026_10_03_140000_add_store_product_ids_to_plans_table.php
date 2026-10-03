@@ -12,7 +12,8 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('plans', function (Blueprint $table) {
-            $table->string('apple_product_id')->nullable()->after('custom_features')->index();
+            $table->string('store_product_id')->nullable()->after('custom_features')->index();
+            $table->string('apple_product_id')->nullable()->after('store_product_id')->index();
             $table->string('google_product_id')->nullable()->after('apple_product_id')->index();
         });
     }
@@ -23,7 +24,7 @@ return new class extends Migration
     public function down(): void
     {
         Schema::table('plans', function (Blueprint $table) {
-            $table->dropColumn(['apple_product_id', 'google_product_id']);
+            $table->dropColumn(['store_product_id', 'apple_product_id', 'google_product_id']);
         });
     }
 };

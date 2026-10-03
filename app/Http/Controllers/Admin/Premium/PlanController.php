@@ -62,6 +62,9 @@ class PlanController extends Controller
             'price' => ['nullable', 'numeric', 'regex:/^\d*(\.\d{2})?$/'],
             'author_earning_percentage' => ['required', 'numeric', 'min:0', 'max:100'],
             'downloads' => ['nullable', 'integer', 'min:1'],
+            'store_product_id' => ['nullable', 'string', 'max:255'],
+            'apple_product_id' => ['nullable', 'string', 'max:255'],
+            'google_product_id' => ['nullable', 'string', 'max:255'],
             'custom_features.*' => ['required', 'string', 'max:255'],
         ]);
 
@@ -91,6 +94,8 @@ class PlanController extends Controller
         $request->status = $request->has('status') ? Plan::STATUS_ACTIVE : Plan::STATUS_DISABLED;
         $request->featured = $request->has('featured') ? Plan::FEATURED : Plan::NOT_FEATURED;
 
+        $storeProductId = $request->store_product_id ?? $request->apple_product_id ?? $request->google_product_id;
+
         $plan = new Plan();
         $plan->name = $request->name;
         $plan->description = $request->description;
@@ -98,6 +103,9 @@ class PlanController extends Controller
         $plan->interval = $request->interval;
         $plan->author_earning_percentage = $request->author_earning_percentage;
         $plan->downloads = $request->downloads;
+        $plan->store_product_id = $storeProductId;
+        $plan->apple_product_id = $storeProductId;
+        $plan->google_product_id = $storeProductId;
         $plan->custom_features = $request->custom_features;
         $plan->status = $request->status;
         $plan->featured = $request->featured;
@@ -126,6 +134,9 @@ class PlanController extends Controller
             'price' => ['nullable', 'numeric', 'regex:/^\d*(\.\d{2})?$/'],
             'author_earning_percentage' => ['required', 'numeric', 'min:0', 'max:100'],
             'downloads' => ['nullable', 'integer', 'min:1'],
+            'store_product_id' => ['nullable', 'string', 'max:255'],
+            'apple_product_id' => ['nullable', 'string', 'max:255'],
+            'google_product_id' => ['nullable', 'string', 'max:255'],
             'custom_features.*' => ['required', 'string', 'max:255'],
         ]);
 
@@ -155,11 +166,16 @@ class PlanController extends Controller
         $request->status = $request->has('status') ? Plan::STATUS_ACTIVE : Plan::STATUS_DISABLED;
         $request->featured = $request->has('featured') ? Plan::FEATURED : Plan::NOT_FEATURED;
 
+        $storeProductId = $request->store_product_id ?? $request->apple_product_id ?? $request->google_product_id;
+
         $plan->name = $request->name;
         $plan->description = $request->description;
         $plan->price = $request->price;
         $plan->author_earning_percentage = $request->author_earning_percentage;
         $plan->downloads = $request->downloads;
+        $plan->store_product_id = $storeProductId;
+        $plan->apple_product_id = $storeProductId;
+        $plan->google_product_id = $storeProductId;
         $plan->custom_features = $request->custom_features;
         $plan->status = $request->status;
         $plan->featured = $request->featured;

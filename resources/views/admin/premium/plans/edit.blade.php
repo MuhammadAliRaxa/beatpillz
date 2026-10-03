@@ -78,6 +78,19 @@
                 </div>
             </div>
         </div>
+        <div class="card mb-4">
+            <div class="card-header">{{ translate('Mobile Apps (In-App Purchases)') }}</div>
+            <div class="card-body p-4">
+                <div class="row g-3">
+                    <div class="col-12">
+                        <label class="form-label">{{ translate('Mobile Store Product ID (iOS & Android)') }}</label>
+                        <input type="text" name="store_product_id" class="form-control form-control-md"
+                            placeholder="e.g. com.beatpillz.monthly" value="{{ $plan->store_product_id ?? $plan->apple_product_id ?? $plan->google_product_id ?? old('store_product_id') }}">
+                        <div class="form-text">{{ translate('The unified in-app subscription product ID used across Apple App Store (StoreKit) and Google Play Console.') }}</div>
+                    </div>
+                </div>
+            </div>
+        </div>
         <div class="card">
             <div class="card-header">{{ translate('Custom Features') }}</div>
             <div class="card-body p-4">
