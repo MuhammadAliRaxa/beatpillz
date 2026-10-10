@@ -274,16 +274,28 @@ Authorization: Bearer <access_token>
 ### `POST /auth/social-login`
 * **Auth**: Public
 * **Description**: Authenticate via mobile native Google, Apple, or Facebook SDK tokens. Creates account automatically if not registered.
-* **Payload**:
+* **Payload (Google / Facebook)**:
 ```json
 {
-  "provider": "google", // "google" | "apple" | "facebook"
+  "provider": "google", // "google" | "facebook"
   "provider_id": "1098239048209384",
   "email": "john@example.com",
   "firstname": "John",
   "lastname": "Doe",
   "avatar": "https://lh3.googleusercontent.com/a/...",
   "device_name": "Flutter Client"
+}
+```
+* **Payload (Sign in with Apple - Production Recommended)**:
+```json
+{
+  "provider": "apple",
+  "identity_token": "eyJraWQiOiJ...", // Apple Identity Token JWT (cryptographically verified against Apple JWKS)
+  "provider_id": "001234.abcdef...",   // Optional when identity_token is sent
+  "email": "john@privaterelay.appleid.com", // Optional on subsequent logins (Apple only sends on 1st login)
+  "firstname": "John",                 // Optional (sent on 1st login)
+  "lastname": "Doe",                  // Optional (sent on 1st login)
+  "device_name": "iPhone 15 Pro"
 }
 ```
 * **Response `200 OK`**:

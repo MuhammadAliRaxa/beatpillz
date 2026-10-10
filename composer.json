@@ -16,6 +16,7 @@
         "diglactic/laravel-breadcrumbs": "^8.1",
         "drewm/mailchimp-api": "^2.5",
         "ezyang/htmlpurifier": "^4.17",
+        "firebase/php-jwt": "^7.2",
         "guzzlehttp/guzzle": "^7.2",
         "hashids/hashids": "^5.0",
         "intervention/image": "^2.7",

@@ -48,7 +48,8 @@ class UserController extends Controller
                     ->orWhere('profile_contact_email', 'like', $searchTerm)
                     ->orWhere('profile_social_links', 'like', $searchTerm)
                     ->orWhere('facebook_id', 'like', $searchTerm)
-                    ->orWhere('google_id', 'like', $searchTerm);
+                    ->orWhere('google_id', 'like', $searchTerm)
+                    ->orWhere('apple_id', 'like', $searchTerm);
             });
         }
 

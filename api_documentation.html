@@ -420,16 +420,27 @@
             <span class="badge badge-post">POST</span>
             <span class="endpoint-path">/auth/social-login</span>
         </div>
-        <p>Native Google, Apple, or Facebook mobile sign-in.</p>
-<pre>// Request
+        <p>Native Google, Apple, or Facebook mobile sign-in. For Apple, pass <code>identity_token</code> (Apple JWT) for cryptographic verification and seamless subsequent logins without requiring email every time.</p>
+<pre>// Request (Google / Facebook)
 {
-  "provider": "google", // "google" | "apple" | "facebook"
+  "provider": "google", // "google" | "facebook"
   "provider_id": "10982347209384",
   "email": "johndoe@gmail.com",
   "firstname": "John",
   "lastname": "Doe",
   "avatar": "https://lh3.googleusercontent.com/...",
   "device_name": "Pixel 8"
+}
+
+// Request (Sign in with Apple - Production Recommended)
+{
+  "provider": "apple",
+  "identity_token": "eyJraWQiOiJ...", // Apple Identity Token JWT
+  "provider_id": "001234.abcdef...",   // Optional when identity_token is sent
+  "email": "johndoe@privaterelay.appleid.com", // Optional on subsequent logins
+  "firstname": "John",
+  "lastname": "Doe",
+  "device_name": "iPhone 15 Pro"
 }
 
 // Response (200 OK)

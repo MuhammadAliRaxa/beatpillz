@@ -70,4 +70,8 @@ return [
         'webhook_secret' => env('REVENUECAT_WEBHOOK_SECRET'),
         'api_key'        => env('REVENUECAT_API_KEY'),
     ],
+
+    'apple' => [
+        'client_id' => env('APPLE_CLIENT_ID'),
+    ],
 ];

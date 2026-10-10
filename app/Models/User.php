@@ -247,6 +247,7 @@ class User extends Authenticatable implements MustVerifyEmail
         'profile_social_links',
         'facebook_id',
         'google_id',
+        'apple_id',
         'microsoft_id',
         'vkontakte_id',
         'envato_id',

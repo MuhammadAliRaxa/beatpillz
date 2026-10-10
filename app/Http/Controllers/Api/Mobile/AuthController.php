@@ -6,6 +6,7 @@ use App\Events\Registered;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\Mobile\UserResource;
 use App\Models\User;
+use App\Services\AppleTokenVerifier;
 use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
@@ -293,15 +294,16 @@ class AuthController extends Controller
     public function socialLogin(Request $request)
     {
         $validator = Validator::make($request->all(), [
-            'provider'    => ['required', 'string', 'in:google,apple,facebook'],
-            'provider_id' => ['required', 'string'],
-            'email'       => ['required', 'email'],
-            'firstname'   => ['nullable', 'string', 'max:50'],
-            'lastname'    => ['nullable', 'string', 'max:50'],
-            'avatar'        => ['nullable', 'string'],
-            'device_name'   => ['nullable', 'string', 'max:100'],
-            'ref'           => ['nullable', 'string', 'max:50'],
-            'referral_code' => ['nullable', 'string', 'max:50'],
+            'provider'       => ['required', 'string', 'in:google,apple,facebook'],
+            'provider_id'    => ['required_without:identity_token', 'nullable', 'string'],
+            'identity_token' => ['nullable', 'string'],
+            'email'          => [$request->provider === 'apple' ? 'nullable' : 'required', 'nullable', 'email'],
+            'firstname'      => ['nullable', 'string', 'max:50'],
+            'lastname'       => ['nullable', 'string', 'max:50'],
+            'avatar'         => ['nullable', 'string'],
+            'device_name'    => ['nullable', 'string', 'max:100'],
+            'ref'            => ['nullable', 'string', 'max:50'],
+            'referral_code'  => ['nullable', 'string', 'max:50'],
         ]);
 
         if ($validator->fails()) {
@@ -312,22 +314,54 @@ class AuthController extends Controller
             ], 422);
         }
 
-        $email = strtolower($request->email);
+        $email = $request->email ? strtolower($request->email) : null;
         $provider = $request->provider;
         $providerId = $request->provider_id;
+
+        // Cryptographically verify Apple Identity Token (JWT) against Apple JWKS public keys
+        if ($provider === 'apple') {
+            if ($request->filled('identity_token')) {
+                try {
+                    $appleClaims = AppleTokenVerifier::verify($request->identity_token);
+                    $providerId = $appleClaims->sub;
+                    if (empty($email) && !empty($appleClaims->email)) {
+                        $email = strtolower($appleClaims->email);
+                    }
+                } catch (\Throwable $e) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'Apple authentication failed: ' . $e->getMessage(),
+                    ], 401);
+                }
+            } elseif (app()->environment('production') && empty($providerId)) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'The identity_token is required for Sign in with Apple in production.',
+                ], 422);
+            }
+        }
 
         $user = null;
         if ($provider === 'facebook') {
             $user = User::where('facebook_id', $providerId)->first();
         } elseif ($provider === 'google') {
             $user = User::where('google_id', $providerId)->first();
+        } elseif ($provider === 'apple') {
+            $user = User::where('apple_id', $providerId)->first();
         }
 
-        if (!$user) {
+        if (!$user && !empty($email)) {
             $user = User::where('email', $email)->first();
         }
 
         if (!$user) {
+            if (empty($email)) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Email address is required for first-time account registration.',
+                ], 422);
+            }
+
             // Generate unique username from email
             $baseUsername = strtolower(explode('@', $email)[0]);
             $baseUsername = preg_replace('/[^A-Za-z0-9_]/', '', $baseUsername);
@@ -350,6 +384,7 @@ class AuthController extends Controller
                 'avatar'       => $request->avatar,
                 'facebook_id'  => $provider === 'facebook' ? $providerId : null,
                 'google_id'    => $provider === 'google' ? $providerId : null,
+                'apple_id'     => $provider === 'apple' ? $providerId : null,
             ]);
 
             try {
@@ -366,6 +401,9 @@ class AuthController extends Controller
                 $user->save();
             } elseif ($provider === 'google' && empty($user->google_id)) {
                 $user->google_id = $providerId;
+                $user->save();
+            } elseif ($provider === 'apple' && empty($user->apple_id)) {
+                $user->apple_id = $providerId;
                 $user->save();
             }
         }
