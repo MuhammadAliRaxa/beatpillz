@@ -46,6 +46,7 @@ class AuthController extends Controller
             'username'  => strtolower($request->username),
             'email'     => strtolower($request->email),
             'password'  => Hash::make($request->password),
+            'status'    => User::STATUS_ACTIVE,
         ]);
 
         try {
@@ -297,7 +298,7 @@ class AuthController extends Controller
             'provider'       => ['required', 'string', 'in:google,apple,facebook'],
             'provider_id'    => ['required_without:identity_token', 'nullable', 'string'],
             'identity_token' => ['nullable', 'string'],
-            'email'          => [$request->provider === 'apple' ? 'nullable' : 'required', 'nullable', 'email'],
+            'email'          => [in_array($request->provider, ['apple', 'google']) ? 'nullable' : 'required', 'nullable', 'email'],
             'firstname'      => ['nullable', 'string', 'max:50'],
             'lastname'       => ['nullable', 'string', 'max:50'],
             'avatar'         => ['nullable', 'string'],
@@ -356,10 +357,16 @@ class AuthController extends Controller
 
         if (!$user) {
             if (empty($email)) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Email address is required for first-time account registration.',
-                ], 422);
+                if (in_array($provider, ['apple', 'google'])) {
+                    $email = $provider === 'apple'
+                        ? ($providerId . '@privaterelay.appleid.com')
+                        : ($provider . '_' . substr(preg_replace('/[^A-Za-z0-9]/', '', $providerId), -8) . '@beatpillz.com');
+                } else {
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'Email address is required for first-time account registration.',
+                    ], 422);
+                }
             }
 
             // Generate unique username from email
@@ -382,10 +389,14 @@ class AuthController extends Controller
                 'email'        => $email,
                 'password'     => Hash::make(Str::random(24)),
                 'avatar'       => $request->avatar,
+                'status'       => User::STATUS_ACTIVE,
                 'facebook_id'  => $provider === 'facebook' ? $providerId : null,
                 'google_id'    => $provider === 'google' ? $providerId : null,
                 'apple_id'     => $provider === 'apple' ? $providerId : null,
             ]);
+
+            // Mark email as verified for social sign-in so NO verification email is sent
+            $user->forceFill(['email_verified_at' => now()])->save();
 
             try {
                 $user->addCountryBadge();
@@ -395,6 +406,17 @@ class AuthController extends Controller
                 event(new Registered($user));
             } catch (\Throwable $th) {}
         } else {
+            // Ensure email is marked verified for social sign-in so no verification email is sent
+            if (!$user->hasVerifiedEmail()) {
+                $user->forceFill(['email_verified_at' => now()])->save();
+            }
+
+            // If user's status is null, set it to active
+            if ($user->status === null) {
+                $user->status = User::STATUS_ACTIVE;
+                $user->save();
+            }
+
             // Link provider ID if not yet linked
             if ($provider === 'facebook' && empty($user->facebook_id)) {
                 $user->facebook_id = $providerId;

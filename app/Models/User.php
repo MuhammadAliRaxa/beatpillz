@@ -46,7 +46,7 @@ class User extends Authenticatable implements MustVerifyEmail
 
     public function isActive()
     {
-        return $this->status == self::STATUS_ACTIVE;
+        return (int) $this->status === self::STATUS_ACTIVE;
     }
 
     public function scopeBanned($query)
@@ -56,7 +56,7 @@ class User extends Authenticatable implements MustVerifyEmail
 
     public function isBanned()
     {
-        return $this->status == self::STATUS_BANNED;
+        return !is_null($this->status) && (int) $this->status === self::STATUS_BANNED;
     }
 
     public function scopeEmailVerified($query)
@@ -261,6 +261,10 @@ class User extends Authenticatable implements MustVerifyEmail
         'status',
     ];
 
+    protected $attributes = [
+        'status' => self::STATUS_ACTIVE,
+    ];
+
     protected $hidden = [
         'password',
         'remember_token',
@@ -271,6 +275,7 @@ class User extends Authenticatable implements MustVerifyEmail
         'email_verified_at' => 'datetime',
         'address' => 'object',
         'profile_social_links' => 'object',
+        'status' => 'integer',
     ];
 
     public function getName()
