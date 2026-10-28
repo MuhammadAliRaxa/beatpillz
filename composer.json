@@ -16,7 +16,7 @@
         "diglactic/laravel-breadcrumbs": "^8.1",
         "drewm/mailchimp-api": "^2.5",
         "ezyang/htmlpurifier": "^4.17",
-        "firebase/php-jwt": "^7.2",
+        "firebase/php-jwt": "^6.0",
         "guzzlehttp/guzzle": "^7.2",
         "hashids/hashids": "^5.0",
         "intervention/image": "^2.7",
@@ -110,6 +110,11 @@
         "sort-packages": true,
         "allow-plugins": {
             "php-http/discovery": true
+        },
+        "policy": {
+            "advisories": {
+                "ignore-id": ["PKSA-y2cr-5h3j-g3ys"]
+            }
         }
     },
     "minimum-stability": "stable",
