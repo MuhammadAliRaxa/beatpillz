@@ -6,7 +6,7 @@
         <priority>0.8</priority>
             </url>
     <url>
-        <loc>https://beatpillz.com</loc>
+        <loc>https://beatpillz.com/refund-policy</loc>
             <changefreq>daily</changefreq>
         <priority>0.8</priority>
             </url>
@@ -16,17 +16,12 @@
         <priority>0.8</priority>
             </url>
     <url>
+        <loc>https://beatpillz.com</loc>
+            <changefreq>daily</changefreq>
+        <priority>0.8</priority>
+            </url>
+    <url>
         <loc>https://beatpillz.com/terms-of-use</loc>
-            <changefreq>daily</changefreq>
-        <priority>0.8</priority>
-            </url>
-    <url>
-        <loc>https://beatpillz.com/refund-policy</loc>
-            <changefreq>daily</changefreq>
-        <priority>0.8</priority>
-            </url>
-    <url>
-        <loc>https://beatpillz.com/register</loc>
             <changefreq>daily</changefreq>
         <priority>0.8</priority>
             </url>
@@ -36,12 +31,17 @@
         <priority>0.8</priority>
             </url>
     <url>
-        <loc>https://beatpillz.com/premium</loc>
+        <loc>https://beatpillz.com/register</loc>
             <changefreq>daily</changefreq>
         <priority>0.8</priority>
             </url>
     <url>
-        <loc>https://beatpillz.com/api-docs</loc>
+        <loc>https://beatpillz.com/categories/afrobeats/afrosoul</loc>
+            <changefreq>daily</changefreq>
+        <priority>0.8</priority>
+            </url>
+    <url>
+        <loc>https://beatpillz.com/premium</loc>
             <changefreq>daily</changefreq>
         <priority>0.8</priority>
             </url>
@@ -51,7 +51,7 @@
         <priority>0.8</priority>
             </url>
     <url>
-        <loc>https://beatpillz.com/categories/afrobeats/classic-afrobeat</loc>
+        <loc>https://beatpillz.com/api-docs</loc>
             <changefreq>daily</changefreq>
         <priority>0.8</priority>
             </url>
@@ -61,12 +61,7 @@
         <priority>0.8</priority>
             </url>
     <url>
-        <loc>https://beatpillz.com/categories/afrobeats/afrodrill</loc>
-            <changefreq>daily</changefreq>
-        <priority>0.8</priority>
-            </url>
-    <url>
-        <loc>https://beatpillz.com/categories/afrobeats/afrornb</loc>
+        <loc>https://beatpillz.com/categories/afrobeats/classic-afrobeat</loc>
             <changefreq>daily</changefreq>
         <priority>0.8</priority>
             </url>
@@ -76,7 +71,7 @@
         <priority>0.8</priority>
             </url>
     <url>
-        <loc>https://beatpillz.com/categories/afrobeats/afrosoul</loc>
+        <loc>https://beatpillz.com/categories/afrobeats/afrodrill</loc>
             <changefreq>daily</changefreq>
         <priority>0.8</priority>
             </url>
@@ -91,17 +86,22 @@
         <priority>0.8</priority>
             </url>
     <url>
+        <loc>https://beatpillz.com/categories/afrobeats/afrornb</loc>
+            <changefreq>daily</changefreq>
+        <priority>0.8</priority>
+            </url>
+    <url>
         <loc>https://beatpillz.com/categories/afrobeats/highlife-afrobeat</loc>
             <changefreq>daily</changefreq>
         <priority>0.8</priority>
             </url>
     <url>
-        <loc>https://beatpillz.com/categories/afrobeats/amapiano-afrobeat</loc>
+        <loc>https://beatpillz.com/categories/afrobeats/afroreggae</loc>
             <changefreq>daily</changefreq>
         <priority>0.8</priority>
             </url>
     <url>
-        <loc>https://beatpillz.com/categories/afrobeats/afroreggae</loc>
+        <loc>https://beatpillz.com/categories/afrobeats/amapiano-afrobeat</loc>
             <changefreq>daily</changefreq>
         <priority>0.8</priority>
             </url>
@@ -156,6 +156,11 @@
         <priority>0.8</priority>
             </url>
     <url>
+        <loc>https://beatpillz.com/categories/dance-hall/bashment</loc>
+            <changefreq>daily</changefreq>
+        <priority>0.8</priority>
+            </url>
+    <url>
         <loc>https://beatpillz.com/categories/hip-hop/latin-trap</loc>
             <changefreq>daily</changefreq>
         <priority>0.8</priority>
@@ -166,17 +171,12 @@
         <priority>0.8</priority>
             </url>
     <url>
-        <loc>https://beatpillz.com/categories/dance-hall/digital-dancehall</loc>
-            <changefreq>daily</changefreq>
-        <priority>0.8</priority>
-            </url>
-    <url>
         <loc>https://beatpillz.com/categories/dance-hall/ragga-muffin</loc>
             <changefreq>daily</changefreq>
         <priority>0.8</priority>
             </url>
     <url>
-        <loc>https://beatpillz.com/categories/dance-hall/bashment</loc>
+        <loc>https://beatpillz.com/categories/dance-hall/digital-dancehall</loc>
             <changefreq>daily</changefreq>
         <priority>0.8</priority>
             </url>
@@ -191,12 +191,12 @@
         <priority>0.8</priority>
             </url>
     <url>
-        <loc>https://beatpillz.com/categories/dance-hall/tropical-dancehall</loc>
+        <loc>https://beatpillz.com/categories/dance-hall/hip-hop-dancehall</loc>
             <changefreq>daily</changefreq>
         <priority>0.8</priority>
             </url>
     <url>
-        <loc>https://beatpillz.com/categories/dance-hall/hip-hop-dancehall</loc>
+        <loc>https://beatpillz.com/categories/dance-hall/tropical-dancehall</loc>
             <changefreq>daily</changefreq>
         <priority>0.8</priority>
             </url>
@@ -216,6 +216,16 @@
         <priority>0.8</priority>
             </url>
     <url>
+        <loc>https://beatpillz.com/categories/gospel/praise-worship</loc>
+            <changefreq>daily</changefreq>
+        <priority>0.8</priority>
+            </url>
+    <url>
+        <loc>https://beatpillz.com/categories/gospel/afrobeat-gospel</loc>
+            <changefreq>daily</changefreq>
+        <priority>0.8</priority>
+            </url>
+    <url>
         <loc>https://beatpillz.com/categories/gospel/traditional-gospel</loc>
             <changefreq>daily</changefreq>
         <priority>0.8</priority>
@@ -226,27 +236,17 @@
         <priority>0.8</priority>
             </url>
     <url>
-        <loc>https://beatpillz.com/categories/gospel/praise-worship</loc>
-            <changefreq>daily</changefreq>
-        <priority>0.8</priority>
-            </url>
-    <url>
         <loc>https://beatpillz.com/categories/gospel/pop-gospel</loc>
             <changefreq>daily</changefreq>
         <priority>0.8</priority>
             </url>
     <url>
-        <loc>https://beatpillz.com/categories/gospel/afrobeat-gospel</loc>
+        <loc>https://beatpillz.com/categories/gospel/south-african-gospel</loc>
             <changefreq>daily</changefreq>
         <priority>0.8</priority>
             </url>
     <url>
         <loc>https://beatpillz.com/categories/gospel/nigerian-gospel</loc>
-            <changefreq>daily</changefreq>
-        <priority>0.8</priority>
-            </url>
-    <url>
-        <loc>https://beatpillz.com/categories/gospel/south-african-gospel</loc>
             <changefreq>daily</changefreq>
         <priority>0.8</priority>
             </url>
@@ -261,6 +261,11 @@
         <priority>0.8</priority>
             </url>
     <url>
+        <loc>https://beatpillz.com/categories/gospel/gospel-reggae</loc>
+            <changefreq>daily</changefreq>
+        <priority>0.8</priority>
+            </url>
+    <url>
         <loc>https://beatpillz.com/categories/gospel/gospel-jazz</loc>
             <changefreq>daily</changefreq>
         <priority>0.8</priority>
@@ -271,7 +276,7 @@
         <priority>0.8</priority>
             </url>
     <url>
-        <loc>https://beatpillz.com/categories/gospel/gospel-reggae</loc>
+        <loc>https://beatpillz.com/categories/gospel/latin-gospel</loc>
             <changefreq>daily</changefreq>
         <priority>0.8</priority>
             </url>
@@ -286,22 +291,22 @@
         <priority>0.8</priority>
             </url>
     <url>
-        <loc>https://beatpillz.com/categories/gospel/latin-gospel</loc>
-            <changefreq>daily</changefreq>
-        <priority>0.8</priority>
-            </url>
-    <url>
         <loc>https://beatpillz.com/categories/gospel/caribbean-gospel</loc>
             <changefreq>daily</changefreq>
         <priority>0.8</priority>
             </url>
     <url>
-        <loc>https://beatpillz.com/categories/highlife/classic-highlife</loc>
+        <loc>https://beatpillz.com/categories/highlife/igbo-highlife</loc>
             <changefreq>daily</changefreq>
         <priority>0.8</priority>
             </url>
     <url>
-        <loc>https://beatpillz.com/categories/highlife/igbo-highlife</loc>
+        <loc>https://beatpillz.com/categories/gospel/french-gospel</loc>
+            <changefreq>daily</changefreq>
+        <priority>0.8</priority>
+            </url>
+    <url>
+        <loc>https://beatpillz.com/categories/highlife/classic-highlife</loc>
             <changefreq>daily</changefreq>
         <priority>0.8</priority>
             </url>
@@ -316,7 +321,7 @@
         <priority>0.8</priority>
             </url>
     <url>
-        <loc>https://beatpillz.com/categories/gospel/french-gospel</loc>
+        <loc>https://beatpillz.com/categories/highlife/afro-highlife</loc>
             <changefreq>daily</changefreq>
         <priority>0.8</priority>
             </url>
@@ -331,7 +336,7 @@
         <priority>0.8</priority>
             </url>
     <url>
-        <loc>https://beatpillz.com/categories/highlife/afro-highlife</loc>
+        <loc>https://beatpillz.com/categories/highlife/urban-highlife</loc>
             <changefreq>daily</changefreq>
         <priority>0.8</priority>
             </url>
@@ -356,11 +361,6 @@
         <priority>0.8</priority>
             </url>
     <url>
-        <loc>https://beatpillz.com/categories/highlife/urban-highlife</loc>
-            <changefreq>daily</changefreq>
-        <priority>0.8</priority>
-            </url>
-    <url>
         <loc>https://beatpillz.com/categories/reggae/nyabinghi</loc>
             <changefreq>daily</changefreq>
         <priority>0.8</priority>
@@ -381,27 +381,7 @@
         <priority>0.8</priority>
             </url>
     <url>
-        <loc>https://beatpillz.com/categories/pop</loc>
-            <changefreq>daily</changefreq>
-        <priority>0.8</priority>
-            </url>
-    <url>
-        <loc>https://beatpillz.com/categories/club</loc>
-            <changefreq>daily</changefreq>
-        <priority>0.8</priority>
-            </url>
-    <url>
         <loc>https://beatpillz.com/categories/reggae/french-reggae</loc>
-            <changefreq>daily</changefreq>
-        <priority>0.8</priority>
-            </url>
-    <url>
-        <loc>https://beatpillz.com/categories/reggae/japanese-reggae</loc>
-            <changefreq>daily</changefreq>
-        <priority>0.8</priority>
-            </url>
-    <url>
-        <loc>https://beatpillz.com/categories/r-b</loc>
             <changefreq>daily</changefreq>
         <priority>0.8</priority>
             </url>
@@ -411,12 +391,22 @@
         <priority>0.8</priority>
             </url>
     <url>
-        <loc>https://beatpillz.com/categories/sound-kits/loop-kit</loc>
+        <loc>https://beatpillz.com/categories/pop</loc>
             <changefreq>daily</changefreq>
         <priority>0.8</priority>
             </url>
     <url>
-        <loc>https://beatpillz.com/categories/sound-kits/midi-kit</loc>
+        <loc>https://beatpillz.com/categories/r-b</loc>
+            <changefreq>daily</changefreq>
+        <priority>0.8</priority>
+            </url>
+    <url>
+        <loc>https://beatpillz.com/categories/club</loc>
+            <changefreq>daily</changefreq>
+        <priority>0.8</priority>
+            </url>
+    <url>
+        <loc>https://beatpillz.com/categories/reggae/japanese-reggae</loc>
             <changefreq>daily</changefreq>
         <priority>0.8</priority>
             </url>
@@ -431,7 +421,22 @@
         <priority>0.8</priority>
             </url>
     <url>
+        <loc>https://beatpillz.com/categories/sound-kits/loop-kit</loc>
+            <changefreq>daily</changefreq>
+        <priority>0.8</priority>
+            </url>
+    <url>
+        <loc>https://beatpillz.com/categories/sound-kits/midi-kit</loc>
+            <changefreq>daily</changefreq>
+        <priority>0.8</priority>
+            </url>
+    <url>
         <loc>https://beatpillz.com/categories/sound-kits/preset-bank</loc>
+            <changefreq>daily</changefreq>
+        <priority>0.8</priority>
+            </url>
+    <url>
+        <loc>https://beatpillz.com/categories</loc>
             <changefreq>daily</changefreq>
         <priority>0.8</priority>
             </url>
@@ -441,12 +446,17 @@
         <priority>0.8</priority>
             </url>
     <url>
+        <loc>https://beatpillz.com/categories/gospel</loc>
+            <changefreq>daily</changefreq>
+        <priority>0.8</priority>
+            </url>
+    <url>
         <loc>https://beatpillz.com/categories/dance-hall</loc>
             <changefreq>daily</changefreq>
         <priority>0.8</priority>
             </url>
     <url>
-        <loc>https://beatpillz.com/categories</loc>
+        <loc>https://beatpillz.com/categories/afrobeats</loc>
             <changefreq>daily</changefreq>
         <priority>0.8</priority>
             </url>
@@ -461,11 +471,6 @@
         <priority>0.8</priority>
             </url>
     <url>
-        <loc>https://beatpillz.com/categories/gospel</loc>
-            <changefreq>daily</changefreq>
-        <priority>0.8</priority>
-            </url>
-    <url>
         <loc>https://beatpillz.com/items?trending=true</loc>
             <changefreq>daily</changefreq>
         <priority>0.8</priority>
@@ -476,42 +481,7 @@
         <priority>0.8</priority>
             </url>
     <url>
-        <loc>https://beatpillz.com/categories/afrobeats</loc>
-            <changefreq>daily</changefreq>
-        <priority>0.8</priority>
-            </url>
-    <url>
         <loc>https://beatpillz.com/items?free=true</loc>
-            <changefreq>daily</changefreq>
-        <priority>0.8</priority>
-            </url>
-    <url>
-        <loc>https://beatpillz.com/items/my-baby/1009</loc>
-            <changefreq>daily</changefreq>
-        <priority>0.8</priority>
-            </url>
-    <url>
-        <loc>https://beatpillz.com/blog/categories/music-industry</loc>
-            <changefreq>daily</changefreq>
-        <priority>0.8</priority>
-            </url>
-    <url>
-        <loc>https://beatpillz.com/blog/articles/how-streaming-changed-the-african-music-industry</loc>
-            <changefreq>daily</changefreq>
-        <priority>0.8</priority>
-            </url>
-    <url>
-        <loc>https://beatpillz.com/items?featured=true</loc>
-            <changefreq>daily</changefreq>
-        <priority>0.8</priority>
-            </url>
-    <url>
-        <loc>https://beatpillz.com/blog/articles/top-10-underrated-nigerian-artists-you-should-be-listening-to</loc>
-            <changefreq>daily</changefreq>
-        <priority>0.8</priority>
-            </url>
-    <url>
-        <loc>https://beatpillz.com/blog/articles/how-to-discover-independent-artists-before-they-blow-up</loc>
             <changefreq>daily</changefreq>
         <priority>0.8</priority>
             </url>
@@ -521,7 +491,12 @@
         <priority>0.8</priority>
             </url>
     <url>
-        <loc>https://beatpillz.com/items/sunset-groove/1007</loc>
+        <loc>https://beatpillz.com/blog/articles/top-10-underrated-nigerian-artists-you-should-be-listening-to</loc>
+            <changefreq>daily</changefreq>
+        <priority>0.8</priority>
+            </url>
+    <url>
+        <loc>https://beatpillz.com/items?featured=true</loc>
             <changefreq>daily</changefreq>
         <priority>0.8</priority>
             </url>
@@ -531,7 +506,22 @@
         <priority>0.8</priority>
             </url>
     <url>
-        <loc>https://beatpillz.com/career</loc>
+        <loc>https://beatpillz.com/blog/articles/how-to-discover-independent-artists-before-they-blow-up</loc>
+            <changefreq>daily</changefreq>
+        <priority>0.8</priority>
+            </url>
+    <url>
+        <loc>https://beatpillz.com/items/my-baby/1009</loc>
+            <changefreq>daily</changefreq>
+        <priority>0.8</priority>
+            </url>
+    <url>
+        <loc>https://beatpillz.com/blog/articles/how-streaming-changed-the-african-music-industry</loc>
+            <changefreq>daily</changefreq>
+        <priority>0.8</priority>
+            </url>
+    <url>
+        <loc>https://beatpillz.com/blog/categories/music-industry</loc>
             <changefreq>daily</changefreq>
         <priority>0.8</priority>
             </url>
@@ -542,6 +532,26 @@
             </url>
     <url>
         <loc>https://beatpillz.com/about-us</loc>
+            <changefreq>daily</changefreq>
+        <priority>0.8</priority>
+            </url>
+    <url>
+        <loc>https://beatpillz.com/items/sunset-groove/1007</loc>
+            <changefreq>daily</changefreq>
+        <priority>0.8</priority>
+            </url>
+    <url>
+        <loc>https://beatpillz.com/contact-us</loc>
+            <changefreq>daily</changefreq>
+        <priority>0.8</priority>
+            </url>
+    <url>
+        <loc>https://beatpillz.com/copyright-disclaimer-notice</loc>
+            <changefreq>daily</changefreq>
+        <priority>0.8</priority>
+            </url>
+    <url>
+        <loc>https://beatpillz.com/career</loc>
             <changefreq>daily</changefreq>
         <priority>0.8</priority>
             </url>
@@ -566,7 +576,7 @@
         <priority>0.8</priority>
             </url>
     <url>
-        <loc>https://beatpillz.com/copyright-disclaimer-notice</loc>
+        <loc>https://beatpillz.com/help</loc>
             <changefreq>daily</changefreq>
         <priority>0.8</priority>
             </url>
@@ -576,22 +586,7 @@
         <priority>0.8</priority>
             </url>
     <url>
-        <loc>https://beatpillz.com/help</loc>
-            <changefreq>daily</changefreq>
-        <priority>0.8</priority>
-            </url>
-    <url>
-        <loc>https://beatpillz.com/contact-us</loc>
-            <changefreq>daily</changefreq>
-        <priority>0.8</priority>
-            </url>
-    <url>
         <loc>https://beatpillz.com/password/reset</loc>
-            <changefreq>daily</changefreq>
-        <priority>0.8</priority>
-            </url>
-    <url>
-        <loc>https://beatpillz.com/user/beatpillz/portfolio</loc>
             <changefreq>daily</changefreq>
         <priority>0.8</priority>
             </url>
@@ -601,12 +596,22 @@
         <priority>0.8</priority>
             </url>
     <url>
-        <loc>https://beatpillz.com/user/usmanghani</loc>
+        <loc>https://beatpillz.com/items?premium=true</loc>
             <changefreq>daily</changefreq>
         <priority>0.8</priority>
             </url>
     <url>
-        <loc>https://beatpillz.com/items?premium=true</loc>
+        <loc>https://beatpillz.com/categories/sound-kits</loc>
+            <changefreq>daily</changefreq>
+        <priority>0.8</priority>
+            </url>
+    <url>
+        <loc>https://beatpillz.com/user/beatpillz/portfolio</loc>
+            <changefreq>daily</changefreq>
+        <priority>0.8</priority>
+            </url>
+    <url>
+        <loc>https://beatpillz.com/user/usmanghani</loc>
             <changefreq>daily</changefreq>
         <priority>0.8</priority>
             </url>
@@ -621,7 +626,12 @@
         <priority>0.8</priority>
             </url>
     <url>
-        <loc>https://beatpillz.com/categories/sound-kits</loc>
+        <loc>https://beatpillz.com/user/garett66</loc>
+            <changefreq>daily</changefreq>
+        <priority>0.8</priority>
+            </url>
+    <url>
+        <loc>https://beatpillz.com/user/ibotsford</loc>
             <changefreq>daily</changefreq>
         <priority>0.8</priority>
             </url>
@@ -636,12 +646,12 @@
         <priority>0.8</priority>
             </url>
     <url>
-        <loc>https://beatpillz.com/user/ibotsford</loc>
+        <loc>https://beatpillz.com/user/jacklyn73</loc>
             <changefreq>daily</changefreq>
         <priority>0.8</priority>
             </url>
     <url>
-        <loc>https://beatpillz.com/user/garett66</loc>
+        <loc>https://beatpillz.com/user/vtrantow</loc>
             <changefreq>daily</changefreq>
         <priority>0.8</priority>
             </url>
@@ -656,27 +666,12 @@
         <priority>0.8</priority>
             </url>
     <url>
-        <loc>https://beatpillz.com/user/jacklyn73</loc>
-            <changefreq>daily</changefreq>
-        <priority>0.8</priority>
-            </url>
-    <url>
-        <loc>https://beatpillz.com/user/vtrantow</loc>
-            <changefreq>daily</changefreq>
-        <priority>0.8</priority>
-            </url>
-    <url>
         <loc>https://beatpillz.com/user/rubieerep</loc>
             <changefreq>daily</changefreq>
         <priority>0.8</priority>
             </url>
     <url>
-        <loc>https://beatpillz.com/items?search=afromusic</loc>
-            <changefreq>daily</changefreq>
-        <priority>0.8</priority>
-            </url>
-    <url>
-        <loc>https://beatpillz.com/items?search=afrobeat</loc>
+        <loc>https://beatpillz.com/items?search=afropop</loc>
             <changefreq>daily</changefreq>
         <priority>0.8</priority>
             </url>
@@ -696,7 +691,12 @@
         <priority>0.8</priority>
             </url>
     <url>
-        <loc>https://beatpillz.com/items?search=afropop</loc>
+        <loc>https://beatpillz.com/items?search=afromusic</loc>
+            <changefreq>daily</changefreq>
+        <priority>0.8</priority>
+            </url>
+    <url>
+        <loc>https://beatpillz.com/items?search=afrobeat</loc>
             <changefreq>daily</changefreq>
         <priority>0.8</priority>
             </url>
@@ -706,22 +706,12 @@
         <priority>0.8</priority>
             </url>
     <url>
-        <loc>https://beatpillz.com/help/categories/terms-conditions</loc>
-            <changefreq>daily</changefreq>
-        <priority>0.8</priority>
-            </url>
-    <url>
-        <loc>https://beatpillz.com/help/articles/beatpillz-referral-program</loc>
-            <changefreq>daily</changefreq>
-        <priority>0.8</priority>
-            </url>
-    <url>
-        <loc>https://beatpillz.com/help/articles/youtube-content-id-policy</loc>
-            <changefreq>daily</changefreq>
-        <priority>0.8</priority>
-            </url>
-    <url>
         <loc>https://beatpillz.com/help/categories/tax-compliance</loc>
+            <changefreq>daily</changefreq>
+        <priority>0.8</priority>
+            </url>
+    <url>
+        <loc>https://beatpillz.com/help/categories/terms-conditions</loc>
             <changefreq>daily</changefreq>
         <priority>0.8</priority>
             </url>
@@ -731,12 +721,17 @@
         <priority>0.8</priority>
             </url>
     <url>
+        <loc>https://beatpillz.com/help/articles/youtube-content-id-policy</loc>
+            <changefreq>daily</changefreq>
+        <priority>0.8</priority>
+            </url>
+    <url>
         <loc>https://beatpillz.com/help/articles/terms-of-use</loc>
             <changefreq>daily</changefreq>
         <priority>0.8</priority>
             </url>
     <url>
-        <loc>https://beatpillz.com/help/articles/managing-your-purchases</loc>
+        <loc>https://beatpillz.com/help/articles/beatpillz-referral-program</loc>
             <changefreq>daily</changefreq>
         <priority>0.8</priority>
             </url>
@@ -746,17 +741,7 @@
         <priority>0.8</priority>
             </url>
     <url>
-        <loc>https://beatpillz.com/help/categories/for-producers</loc>
-            <changefreq>daily</changefreq>
-        <priority>0.8</priority>
-            </url>
-    <url>
         <loc>https://beatpillz.com/help/articles/how-to-buy-and-download-beats</loc>
-            <changefreq>daily</changefreq>
-        <priority>0.8</priority>
-            </url>
-    <url>
-        <loc>https://beatpillz.com/help/articles/uploading-and-managing-beats</loc>
             <changefreq>daily</changefreq>
         <priority>0.8</priority>
             </url>
@@ -766,17 +751,22 @@
         <priority>0.8</priority>
             </url>
     <url>
+        <loc>https://beatpillz.com/help/categories/for-producers</loc>
+            <changefreq>daily</changefreq>
+        <priority>0.8</priority>
+            </url>
+    <url>
+        <loc>https://beatpillz.com/help/articles/managing-your-purchases</loc>
+            <changefreq>daily</changefreq>
+        <priority>0.8</priority>
+            </url>
+    <url>
+        <loc>https://beatpillz.com/help/articles/uploading-and-managing-beats</loc>
+            <changefreq>daily</changefreq>
+        <priority>0.8</priority>
+            </url>
+    <url>
         <loc>https://beatpillz.com/help/articles/earnings-and-withdrawals</loc>
-            <changefreq>daily</changefreq>
-        <priority>0.8</priority>
-            </url>
-    <url>
-        <loc>https://beatpillz.com/help/articles/missing-or-incorrect-files</loc>
-            <changefreq>daily</changefreq>
-        <priority>0.8</priority>
-            </url>
-    <url>
-        <loc>https://beatpillz.com/help/articles/producer-tax-responsibilities</loc>
             <changefreq>daily</changefreq>
         <priority>0.8</priority>
             </url>
@@ -786,12 +776,22 @@
         <priority>0.8</priority>
             </url>
     <url>
+        <loc>https://beatpillz.com/help/articles/download-issues</loc>
+            <changefreq>daily</changefreq>
+        <priority>0.8</priority>
+            </url>
+    <url>
+        <loc>https://beatpillz.com/help/articles/missing-or-incorrect-files</loc>
+            <changefreq>daily</changefreq>
+        <priority>0.8</priority>
+            </url>
+    <url>
         <loc>https://beatpillz.com/help/articles/audio-or-quality-issues</loc>
             <changefreq>daily</changefreq>
         <priority>0.8</priority>
             </url>
     <url>
-        <loc>https://beatpillz.com/help/articles/download-issues</loc>
+        <loc>https://beatpillz.com/help/articles/compliance-guidelines</loc>
             <changefreq>daily</changefreq>
         <priority>0.8</priority>
             </url>
@@ -801,7 +801,7 @@
         <priority>0.8</priority>
             </url>
     <url>
-        <loc>https://beatpillz.com/help/articles/profile-management</loc>
+        <loc>https://beatpillz.com/help/articles/producer-tax-responsibilities</loc>
             <changefreq>daily</changefreq>
         <priority>0.8</priority>
             </url>
@@ -811,7 +811,12 @@
         <priority>0.8</priority>
             </url>
     <url>
-        <loc>https://beatpillz.com/help/articles/compliance-guidelines</loc>
+        <loc>https://beatpillz.com/help/articles/profile-management</loc>
+            <changefreq>daily</changefreq>
+        <priority>0.8</priority>
+            </url>
+    <url>
+        <loc>https://beatpillz.com/help/articles/account-deactivation</loc>
             <changefreq>daily</changefreq>
         <priority>0.8</priority>
             </url>
@@ -826,7 +831,22 @@
         <priority>0.8</priority>
             </url>
     <url>
-        <loc>https://beatpillz.com/help/articles/account-deactivation</loc>
+        <loc>https://beatpillz.com/help/categories/beatpillz-market-licenses-faq</loc>
+            <changefreq>daily</changefreq>
+        <priority>0.8</priority>
+            </url>
+    <url>
+        <loc>https://beatpillz.com/workspace/tickets/create</loc>
+            <changefreq>daily</changefreq>
+        <priority>0.8</priority>
+            </url>
+    <url>
+        <loc>https://beatpillz.com/help/articles/license-upgrades</loc>
+            <changefreq>daily</changefreq>
+        <priority>0.8</priority>
+            </url>
+    <url>
+        <loc>https://beatpillz.com/help/categories/advertising</loc>
             <changefreq>daily</changefreq>
         <priority>0.8</priority>
             </url>
@@ -841,32 +861,7 @@
         <priority>0.8</priority>
             </url>
     <url>
-        <loc>https://beatpillz.com/help/categories/beatpillz-market-licenses-faq</loc>
-            <changefreq>daily</changefreq>
-        <priority>0.8</priority>
-            </url>
-    <url>
-        <loc>https://beatpillz.com/help/articles/license-usage-rules</loc>
-            <changefreq>daily</changefreq>
-        <priority>0.8</priority>
-            </url>
-    <url>
-        <loc>https://beatpillz.com/help/articles/what-is-a-beat-license</loc>
-            <changefreq>daily</changefreq>
-        <priority>0.8</priority>
-            </url>
-    <url>
-        <loc>https://beatpillz.com/workspace/tickets/create</loc>
-            <changefreq>daily</changefreq>
-        <priority>0.8</priority>
-            </url>
-    <url>
-        <loc>https://beatpillz.com/help/categories/advertising</loc>
-            <changefreq>daily</changefreq>
-        <priority>0.8</priority>
-            </url>
-    <url>
-        <loc>https://beatpillz.com/help/articles/promotion-troubleshooting</loc>
+        <loc>https://beatpillz.com/help/articles/advertising-your-beats</loc>
             <changefreq>daily</changefreq>
         <priority>0.8</priority>
             </url>
@@ -876,12 +871,12 @@
         <priority>0.8</priority>
             </url>
     <url>
-        <loc>https://beatpillz.com/help/articles/license-upgrades</loc>
+        <loc>https://beatpillz.com/help/articles/what-is-a-beat-license</loc>
             <changefreq>daily</changefreq>
         <priority>0.8</priority>
             </url>
     <url>
-        <loc>https://beatpillz.com/help/articles/advertising-your-beats</loc>
+        <loc>https://beatpillz.com/help/articles/license-usage-rules</loc>
             <changefreq>daily</changefreq>
         <priority>0.8</priority>
             </url>
@@ -891,12 +886,12 @@
         <priority>0.8</priority>
             </url>
     <url>
-        <loc>https://beatpillz.com/user/ali427427/portfolio</loc>
+        <loc>https://beatpillz.com/help/articles/promotion-troubleshooting</loc>
             <changefreq>daily</changefreq>
         <priority>0.8</priority>
             </url>
     <url>
-        <loc>https://beatpillz.com/exclusive-license-agreement</loc>
+        <loc>https://beatpillz.com/user/ali427427/portfolio</loc>
             <changefreq>daily</changefreq>
         <priority>0.8</priority>
             </url>
@@ -907,6 +902,11 @@
             </url>
     <url>
         <loc>https://beatpillz.com/free-beats-license-agreement</loc>
+            <changefreq>daily</changefreq>
+        <priority>0.8</priority>
+            </url>
+    <url>
+        <loc>https://beatpillz.com/exclusive-license-agreement</loc>
             <changefreq>daily</changefreq>
         <priority>0.8</priority>
             </url>
