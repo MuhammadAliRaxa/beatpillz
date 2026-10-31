@@ -279,7 +279,7 @@ Authorization: Bearer <access_token>
 {
   "provider": "google", // "google" | "facebook"
   "provider_id": "1098239048209384",
-  "email": "john@example.com",
+  "email": "john@example.com", // Optional for Google & Apple (auto-generated relay fallback if omitted)
   "firstname": "John",
   "lastname": "Doe",
   "avatar": "https://lh3.googleusercontent.com/a/...",
@@ -292,12 +292,13 @@ Authorization: Bearer <access_token>
   "provider": "apple",
   "identity_token": "eyJraWQiOiJ...", // Apple Identity Token JWT (cryptographically verified against Apple JWKS)
   "provider_id": "001234.abcdef...",   // Optional when identity_token is sent
-  "email": "john@privaterelay.appleid.com", // Optional on subsequent logins (Apple only sends on 1st login)
+  "email": "john@privaterelay.appleid.com", // Optional for Apple (auto-extracted from identity_token or relay fallback)
   "firstname": "John",                 // Optional (sent on 1st login)
   "lastname": "Doe",                  // Optional (sent on 1st login)
   "device_name": "iPhone 15 Pro"
 }
 ```
+> **Note**: For Apple and Google sign-ins, accounts are instantly verified upon authentication — no email verification notifications are dispatched.
 * **Response `200 OK`**:
 ```json
 {
