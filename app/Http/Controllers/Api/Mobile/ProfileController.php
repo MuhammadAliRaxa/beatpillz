@@ -8,6 +8,7 @@ use App\Http\Resources\Mobile\UserResource;
 use App\Models\KycVerification;
 use App\Models\User;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
@@ -704,6 +705,98 @@ class ProfileController extends Controller
             'api_key' => $apiKey,
             'docs_url'=> route('api.docs'),
         ], 200);
+    }
+
+    /**
+     * Delete authenticated user account and all associated resources.
+     * Complies with Apple App Store Guideline 5.1.1(v) & Google Play Data Safety policies.
+     *
+     * @param Request $request
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function deleteAccount(Request $request)
+    {
+        $user = $request->user();
+        if (!$user) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Unauthenticated.',
+            ], 401);
+        }
+
+        $validator = Validator::make($request->all(), [
+            'password'     => ['nullable', 'string'],
+            'confirm'      => ['nullable'],
+            'confirmation' => ['nullable'],
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'success' => false,
+                'message' => $validator->errors()->first(),
+                'errors'  => $validator->errors(),
+            ], 422);
+        }
+
+        $isSocialUser = !empty($user->apple_id) || !empty($user->google_id) || !empty($user->facebook_id);
+        $isConfirmed  = $request->boolean('confirm')
+            || $request->boolean('confirmation')
+            || in_array(strtolower(trim((string) $request->input('confirm', ''))), ['true', '1', 'delete', 'yes'])
+            || in_array(strtolower(trim((string) $request->input('confirmation', ''))), ['true', '1', 'delete', 'yes']);
+
+        if ($request->filled('password')) {
+            if (!Hash::check($request->password, $user->password)) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'The provided password is incorrect.',
+                    'errors'  => ['password' => ['The provided password is incorrect.']],
+                ], 422);
+            }
+        } elseif (!$isSocialUser && !$isConfirmed) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Password or confirmation is required to delete your account.',
+                'errors'  => ['confirm' => ['Password or confirmation (confirm: true) is required to delete your account.']],
+            ], 422);
+        } elseif ($isSocialUser && !$isConfirmed && !$request->filled('password')) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Please confirm account deletion.',
+                'errors'  => ['confirm' => ['Confirmation is required to delete your account.']],
+            ], 422);
+        }
+
+        try {
+            DB::transaction(function () use ($user) {
+                // 1. Empty user cart
+                if (method_exists($user, 'emptyCart')) {
+                    $user->emptyCart();
+                }
+
+                // 2. Clean up media and related resources
+                if (method_exists($user, 'deleteResources')) {
+                    $user->deleteResources();
+                }
+
+                // 3. Revoke all active API tokens
+                if (method_exists($user, 'tokens')) {
+                    $user->tokens()->delete();
+                }
+
+                // 4. Permanently delete user record
+                $user->delete();
+            });
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Your account and all associated data have been permanently deleted.',
+            ], 200);
+        } catch (\Throwable $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to delete account: ' . $e->getMessage(),
+            ], 500);
+        }
     }
 }
 

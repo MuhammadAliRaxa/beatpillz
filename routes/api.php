@@ -110,11 +110,13 @@ Route::namespace('Api\Mobile')->prefix('v1')->name('api.v1.')->group(function ()
 
         // Auth management
         Route::post('auth/logout', 'AuthController@logout')->name('auth.logout');
+        Route::delete('auth/delete-account', 'ProfileController@deleteAccount')->name('auth.delete-account');
 
         // User Profile, KYC & Author Status
         Route::prefix('user')->name('user.')->group(function () {
             Route::get('profile', 'ProfileController@profile')->name('profile');
             Route::put('profile', 'ProfileController@updateProfile')->name('profile.update');
+            Route::delete('account', 'ProfileController@deleteAccount')->name('account.delete');
             Route::put('account-details', 'ProfileController@updateAccountDetails')->name('account-details.update');
             Route::post('avatar', 'ProfileController@updateAvatar')->name('avatar.update');
             Route::post('cover', 'ProfileController@updateCover')->name('cover.update');

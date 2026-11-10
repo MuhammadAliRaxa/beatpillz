@@ -343,6 +343,58 @@ Authorization: Bearer <access_token>
 
 ---
 
+### `DELETE /user/account` (or `DELETE /auth/delete-account`)
+* **Auth**: Bearer Token Required (`Authorization: Bearer <access_token>`)
+* **Description**: Permanently deletes the authenticated user's account, personal access tokens, media files (avatar, cover), and all associated database records. **Mandatory for Apple App Store (Guideline 5.1.1v) & Google Play Data Safety compliance**.
+* **Payload (Standard Email/Password Account)**:
+```json
+{
+  "password": "Password123"
+}
+```
+* **Payload (Sign in with Apple / Google / Social Account)**:
+```json
+{
+  "confirm": true
+}
+```
+* **Validation Rules**:
+  * `password`: nullable, string (Required for password-created accounts if `confirm` is not true; must match current password)
+  * `confirm`: nullable, boolean (Required for Apple/Google social accounts or if password is not supplied; must be `true`)
+* **Response `200 OK`**:
+```json
+{
+  "success": true,
+  "message": "Your account and all associated data have been permanently deleted."
+}
+```
+* **Response `422 Unprocessable Entity` (Wrong Password)**:
+```json
+{
+  "success": false,
+  "message": "The provided password is incorrect.",
+  "errors": {
+    "password": [
+      "The provided password is incorrect."
+    ]
+  }
+}
+```
+* **Response `422 Unprocessable Entity` (Missing Confirmation)**:
+```json
+{
+  "success": false,
+  "message": "Please confirm account deletion.",
+  "errors": {
+    "confirm": [
+      "Confirmation is required to delete your account."
+    ]
+  }
+}
+```
+
+---
+
 ## 4. User Profile, KYC & Creator Setup
 
 ### `GET /user/profile`
@@ -2382,6 +2434,24 @@ class BeatPillzApiService {
       await http.post(Uri.parse('$baseUrl/auth/logout'), headers: await _headers());
     } catch (_) {}
     await _storage.delete(key: 'auth_token');
+  }
+
+  // 8. Delete Account (Apple App Store Guideline 5.1.1v compliant)
+  static Future<Map<String, dynamic>> deleteAccount({String? password, bool confirm = true}) async {
+    final body = <String, dynamic>{'confirm': confirm};
+    if (password != null && password.isNotEmpty) {
+      body['password'] = password;
+    }
+    final response = await http.delete(
+      Uri.parse('$baseUrl/user/account'),
+      headers: await _headers(),
+      body: jsonEncode(body),
+    );
+    final data = jsonDecode(response.body);
+    if (response.statusCode == 200 && (data['success'] == true)) {
+      await _storage.delete(key: 'auth_token');
+    }
+    return data;
   }
 }
 ```
