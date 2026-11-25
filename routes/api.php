@@ -131,6 +131,7 @@ Route::namespace('Api\Mobile')->prefix('v1')->name('api.v1.')->group(function ()
             Route::get('badges', 'BadgeController@index')->name('badges');
             Route::post('badges/sortable', 'BadgeController@sortable')->name('badges.sortable');
             Route::post('become-author', 'ProfileController@becomeAuthor')->name('become-author');
+            Route::post('wallet/iap-topup', 'WalletController@iapTopup')->name('wallet.iap-topup');
             Route::put('withdrawal-account', 'ProfileController@updateWithdrawalAccount')->name('withdrawal-account');
             Route::get('following', 'ProducerController@following')->name('following');
             Route::get('subscription', 'PlanController@userSubscription')->name('subscription');

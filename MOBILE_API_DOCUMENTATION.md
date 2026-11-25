@@ -343,6 +343,48 @@ Authorization: Bearer <access_token>
 
 ---
 
+### `POST /user/wallet/iap-topup`
+* **Auth**: Bearer Token Required (`Authorization: Bearer <access_token>`)
+* **Description**: Credits the authenticated user's wallet balance after a successful Apple In-App Purchase consumable purchase. The server determines the credit amount from the `product_id` — the client never sends the dollar amount. This endpoint is **idempotent**: sending the same `transaction_id` twice returns a 200 with the current balance and does NOT double-credit.
+* **Payload**:
+```json
+{
+  "product_id": "com.beatpillz.wallet.25",
+  "transaction_id": "APPLE_TRX_ID_FROM_STOREKIT",
+  "store": "app_store",
+  "environment": "production"
+}
+```
+* **Available Product IDs**:
+
+| Product ID | Credit Amount |
+|---|---|
+| `com.beatpillz.wallet.10` | \$10.00 |
+| `com.beatpillz.wallet.25` | \$25.00 |
+| `com.beatpillz.wallet.50` | \$50.00 |
+| `com.beatpillz.wallet.100` | \$100.00 |
+
+* **Success Response (200)**:
+```json
+{
+  "success": true,
+  "message": "Wallet credited successfully.",
+  "credited": 25.00,
+  "new_balance": 37.50,
+  "transaction_id": "APPLE_TRX_ID_FROM_STOREKIT"
+}
+```
+* **Error Responses**:
+  * `422` — Invalid `product_id` (not a known wallet pack)
+  * `422` — Validation error (missing fields)
+  * `500` — Server error (DB failure)
+* **Notes**:
+  * Credits **never expire** (Apple consumable IAP guideline requirement)
+  * `environment` should be `"sandbox"` during TestFlight / Xcode testing, `"production"` on live App Store
+  * RevenueCat also sends a `NON_RENEWING_PURCHASE` webhook as a resilience path — both paths share the same idempotency table so the wallet is credited exactly once
+
+---
+
 ### `DELETE /user/account` (or `DELETE /auth/delete-account`)
 * **Auth**: Bearer Token Required (`Authorization: Bearer <access_token>`)
 * **Description**: Permanently deletes the authenticated user's account, personal access tokens, media files (avatar, cover), and all associated database records. **Mandatory for Apple App Store (Guideline 5.1.1v) & Google Play Data Safety compliance**.
@@ -2436,7 +2478,27 @@ class BeatPillzApiService {
     await _storage.delete(key: 'auth_token');
   }
 
-  // 8. Delete Account (Apple App Store Guideline 5.1.1v compliant)
+  // 8. IAP Wallet Top-Up (Apple IAP consumable purchase credit)
+  static Future<Map<String, dynamic>> iapTopup({
+    required String productId,
+    required String transactionId,
+    String store = 'app_store',
+    String environment = 'production',
+  }) async {
+    final response = await http.post(
+      Uri.parse('$baseUrl/user/wallet/iap-topup'),
+      headers: await _headers(),
+      body: jsonEncode({
+        'product_id': productId,
+        'transaction_id': transactionId,
+        'store': store,
+        'environment': environment,
+      }),
+    );
+    return jsonDecode(response.body);
+  }
+
+  // 9. Delete Account (Apple App Store Guideline 5.1.1v compliant)
   static Future<Map<String, dynamic>> deleteAccount({String? password, bool confirm = true}) async {
     final body = <String, dynamic>{'confirm': confirm};
     if (password != null && password.isNotEmpty) {

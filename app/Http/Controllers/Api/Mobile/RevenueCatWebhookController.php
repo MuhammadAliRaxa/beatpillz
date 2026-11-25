@@ -92,6 +92,9 @@ class RevenueCatWebhookController extends Controller
             case 'EXPIRATION':
                 return $this->processExpiration($user, $event);
 
+            case 'NON_RENEWING_PURCHASE':
+                return $this->processConsumablePurchase($user, $event);
+
             default:
                 Log::info("RevenueCat Webhook: Unhandled event type [{$type}] acknowledged.");
                 return response()->json([
@@ -196,6 +199,106 @@ class RevenueCatWebhookController extends Controller
             DB::rollBack();
             Log::error('RevenueCat Webhook: Database error processing purchase: ' . $e->getMessage(), [
                 'trace' => $e->getTraceAsString(),
+            ]);
+            return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
+        }
+    }
+
+    /**
+     * Process a NON_RENEWING_PURCHASE (consumable IAP) webhook from RevenueCat.
+     * This is the server-side resilience path — the mobile client also calls
+     * POST /api/v1/user/wallet/iap-topup directly after purchase.
+     * Both paths share the same iap_transactions idempotency table, so
+     * the wallet is only credited once regardless of which arrives first.
+     */
+    protected function processConsumablePurchase(User $user, array $event)
+    {
+        $packAmounts = [
+            'com.beatpillz.wallet.10'  => 10.00,
+            'com.beatpillz.wallet.25'  => 25.00,
+            'com.beatpillz.wallet.50'  => 50.00,
+            'com.beatpillz.wallet.100' => 100.00,
+        ];
+
+        $productId     = $event['product_id'] ?? null;
+        $transactionId = $event['transaction_id'] ?? $event['original_transaction_id'] ?? null;
+        $store         = strtolower($event['store'] ?? 'APP_STORE');
+        $environment   = strtolower($event['environment'] ?? 'PRODUCTION');
+
+        if (!$productId || !array_key_exists($productId, $packAmounts)) {
+            Log::info("RevenueCat Webhook [NON_RENEWING_PURCHASE]: Not a wallet pack product — skipping.", [
+                'product_id' => $productId,
+                'user_id'    => $user->id,
+            ]);
+            return response()->json(['success' => true, 'message' => 'Not a wallet pack — skipped.'], 200);
+        }
+
+        if (!$transactionId) {
+            Log::warning('RevenueCat Webhook [NON_RENEWING_PURCHASE]: Missing transaction_id.', [
+                'user_id'    => $user->id,
+                'product_id' => $productId,
+            ]);
+            return response()->json(['success' => false, 'message' => 'Missing transaction_id.'], 200);
+        }
+
+        $creditAmount = $packAmounts[$productId];
+
+        // Idempotency: skip if already credited (mobile client may have done it first)
+        $exists = DB::table('iap_transactions')->where('transaction_id', $transactionId)->exists();
+        if ($exists) {
+            Log::info('RevenueCat Webhook [NON_RENEWING_PURCHASE]: Already credited — skipping duplicate.', [
+                'transaction_id' => $transactionId,
+                'user_id'        => $user->id,
+            ]);
+            return response()->json(['success' => true, 'message' => 'Already credited.'], 200);
+        }
+
+        DB::beginTransaction();
+        try {
+            DB::table('iap_transactions')->insert([
+                'user_id'        => $user->id,
+                'store'          => $store,
+                'product_id'     => $productId,
+                'transaction_id' => $transactionId,
+                'amount'         => $creditAmount,
+                'environment'    => $environment,
+                'created_at'     => now(),
+                'updated_at'     => now(),
+            ]);
+
+            $user->increment('balance', $creditAmount);
+
+            $transaction           = new Transaction();
+            $transaction->user_id  = $user->id;
+            $transaction->amount   = $creditAmount;
+            $transaction->total    = $creditAmount;
+            $transaction->type     = Transaction::TYPE_DEPOSIT;
+            $transaction->status   = Transaction::STATUS_PAID;
+            $transaction->save();
+
+            $statement          = new Statement();
+            $statement->user_id = $user->id;
+            $statement->title   = "[Apple IAP Top-Up] {$productId}";
+            $statement->amount  = $creditAmount;
+            $statement->total   = $creditAmount;
+            $statement->type    = Statement::TYPE_CREDIT;
+            $statement->save();
+
+            DB::commit();
+
+            Log::info('RevenueCat Webhook [NON_RENEWING_PURCHASE]: Wallet credited via webhook.', [
+                'user_id'        => $user->id,
+                'product_id'     => $productId,
+                'credited'       => $creditAmount,
+                'transaction_id' => $transactionId,
+            ]);
+
+            return response()->json(['success' => true, 'message' => 'Wallet credited via webhook.'], 200);
+
+        } catch (\Throwable $e) {
+            DB::rollBack();
+            Log::error('RevenueCat Webhook [NON_RENEWING_PURCHASE]: Failed.', [
+                'error' => $e->getMessage(),
             ]);
             return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
         }
